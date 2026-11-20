@@ -1,0 +1,103 @@
+mrn,patient_name,dob,collected,panel,test,value,unit,ref_range,flag
+0001020,"Quintero, Marisol",14 Feb 1958,28-Nov-2024,BMP,Sodium,139,mmol/L,135-145,
+MRN 0001020,Marisol Quintero,1958-02-14,28-Nov-2024,BMP,Potassium,4.2,mmol/L,3.5-5.1,
+MRN-0001020,"QUINTERO, MARISOL",02/14/1958,2024-11-28 10:00,BMP,Creatinine,0.9,mg/dL,0.6-1.3,
+MRN-0001020,"QUINTERO, MARISOL",14 Feb 1958,2024-11-28 10:00,BMP,Glucose,92,mg/dL,70-99,
+MRN 0001020,"QUINTERO, MARISOL",1958-02-14,2024-11-28 10:00,Lipid Panel,LDL Cholesterol,131,mg/dL,<100,H
+0001020,"Quintero, Marisol",14 Feb 1958,28-Nov-2024,Lipid Panel,HDL Cholesterol,52,mg/dL,40-100,
+MRN 0001020,"QUINTERO, MARISOL",2/14/58,2024-11-28 10:00,Lipid Panel,Total Cholesterol,172,mg/dL,<200,
+mrn1020,"Quintero, Marisol",14 Feb 1958,2025-09-16 11:00,BMP,Sodium,132,mmol/L,135-145,L
+MRN 0001020,"QUINTERO, MARISOL",2/14/58,16-Sep-2025,BMP,Potassium,5.4,mmol/L,3.5-5.1,H
+0001020,"Quintero, Marisol",02/14/1958,2025-09-16 11:00,BMP,Creatinine,1.6,mg/dL,0.6-1.3,H
+1020,Marisol Quintero,1958-02-14,2025-09-16 11:00,BMP,Glucose,,mg/dL,70-99,
+1020,Marisol Quintero,1958-02-14,2025-09-16 11:00,BMP,Glucose,118,mg/dL,70-99,H
+mrn1020,Marisol Quintero,1958-02-14,16-Sep-2025,BNP,BNP,1250,pg/mL,<101,H
+1382,Theodore Banks,1949-11-03,10/26/2024 10:00,CBC,Hemoglobin,14.1,g/dL,12.0-17.5,
+0001382,"BANKS, THEODORE",11/03/1949,26-Oct-2024,CBC,WBC,11.9,10*3/uL,4.0-11.0,H
+0001382,"BANKS, THEODORE","November 3, 1949",10/26/2024 10:00,CBC,Platelets,255,10*3/uL,150-400,
+mrn1382,"BANKS, THEODORE",11/3/49,07/27/2025 20:00,CBC,Hemoglobin,13.1,g/dL,12.0-17.5,
+mrn1382,Theodore Banks,11/03/1949,27-Jul-2025,CBC,WBC,15.8,10*3/uL,4.0-11.0,H
+1382,"BANKS, THEODORE",11/3/49,2025-07-27 20:00,CBC,Platelets,310,10*3/uL,150-400,
+MRN 0001771,Aaliyah Okafor,"June 21, 1972",2025-08-21 15:00,HbA1c,Hemoglobin A1c,9.4,%,4.0-5.6,H
+1771,,"June 21, 1972",08/21/2025 15:00,BMP,Sodium,139,mmol/L,135-145,
+0001771,,"June 21, 1972",21-Aug-2025,BMP,Potassium,4.2,mmol/L,3.5-5.1,
+mrn1771,,6/21/72,08/21/2025 15:00,BMP,Creatinine,0.9,mg/dL,0.6-1.3,
+mrn1771,Aaliyah Okafor,21 Jun 1972,21-Aug-2025,BMP,Glucose,212,mg/dL,70-99,H
+0001771,"Okafor, Aaliyah",1972-06-21,08/21/2025 15:00,Lipid Panel,LDL Cholesterol,162,mg/dL,<100,H
+1771,"OKAFOR, AALIYAH",1972-06-21,2025-08-21 15:00,Lipid Panel,HDL Cholesterol,52,mg/dL,40-100,
+0001771,"OKAFOR, AALIYAH",06/21/1972,2025-08-21 15:00,Lipid Panel,Total Cholesterol,248,mg/dL,<200,H
+2160,Gregor Lindqvist,9/30/55,2025-02-26 10:00,BMP,Sodium,139,mmol/L,135-145,
+mrn2160,"LINDQVIST, GREGOR",30 Sep 1955,26-Feb-2025,BMP,Potassium,4.2,mmol/L,3.5-5.1,
+MRN 0002160,Gregor Lindqvist,9/30/55,2025-02-26 10:00,BMP,Creatinine,0.9,mg/dL,0.6-1.3,
+MRN-0002160,Gregor Lindqvist,1955-09-30,26-Feb-2025,BMP,Glucose,92,mg/dL,70-99,
+2160,Gregor Lindqvist,1955-09-30,2025-02-26 10:00,Lipid Panel,LDL Cholesterol,131,mg/dL,<100,H
+MRN-0002160,"Lindqvist, Gregor",1955-09-30,2025-02-26 10:00,Lipid Panel,HDL Cholesterol,52,mg/dL,40-100,
+MRN-0002160,"Lindqvist, Gregor",09/30/1955,02/26/2025 10:00,Lipid Panel,Total Cholesterol,172,mg/dL,<200,
+0002160,"LINDQVIST, GREGOR",1955/9/30,07/02/2025 08:00,BMP,Sodium,139,mmol/L,135-145,
+0002160,"Lindqvist, Gregor",1955/9/30,2025-07-02 08:00,BMP,Potassium,5.6,mmol/L,3.5-5.1,H
+MRN 0002160,"LINDQVIST, GREGOR",1955-09-30,02-Jul-2025,BMP,Creatinine,2.1,mg/dL,0.6-1.3,H
+2160,"LINDQVIST, GREGOR",09/30/1955,2025-07-02 08:00,BMP,Glucose,92,mg/dL,70-99,
+0002106,"LINDQVIST, GREGOR",09/30/1955,2025-07-02 08:00,CBC,Hemoglobin,9.8,g/dL,12.0-17.5,L
+0002106,"Lindqvist, Gregor",09/30/1955,2025-07-02 08:00,CBC,WBC,7.2,10*3/uL,4.0-11.0,
+0002106,"Lindqvist, Gregor",9/30/55,07/02/2025 08:00,CBC,Platelets,255,10*3/uL,150-400,
+0002495,Priya Raman,1961-07-04,2025-08-17 15:00,CBC,Hemoglobin,14.1,g/dL,12.0-17.5,
+MRN-0002495,"RAMAN, PRIYA",1961-07-04,17-Aug-2025,CBC,WBC,7.2,10*3/uL,4.0-11.0,
+MRN 0002495,"Raman, Priya",07/04/1961,17-Aug-2025,CBC,Platelets,255,10*3/uL,150-400,
+mrn2495,"RAMAN, PRIYA",1961/7/4,08/17/2025 15:00,Lipid Panel,LDL Cholesterol,141,mg/dL,<100,H
+mrn2495,"Raman, Priya",1961/7/4,17-Aug-2025,Lipid Panel,HDL Cholesterol,52,mg/dL,40-100,
+mrn2495,"Raman, Priya","July 4, 1961",17-Aug-2025,Lipid Panel,Total Cholesterol,172,mg/dL,<200,
+2869,"FELD, JONAH","December 9, 1994",07/31/2025 18:00,CBC,Hemoglobin,14.1,g/dL,12.0-17.5,
+2869,Jonah Feld,"December 9, 1994",07/31/2025 18:00,CBC,WBC,14.2,10*3/uL,4.0-11.0,H
+2869,"FELD, JONAH",1994-12-09,31-Jul-2025,CBC,Platelets,255,10*3/uL,150-400,
+0003272,Delphine Moreau,03/17/1947,06/19/2025 14:00,CBC,Hemoglobin,14.1,g/dL,12.0-17.5,
+MRN-0003272,"Moreau, Delphine",1947/3/17,19-Jun-2025,CBC,WBC,11.9,10*3/uL,4.0-11.0,H
+0003272,"Moreau, Delphine",03/17/1947,19-Jun-2025,CBC,Platelets,255,10*3/uL,150-400,
+0003617,"ACHTERBERG, SAMUEL",1983/8/25,09/02/2025 08:00,TSH,TSH,11.2,mIU/L,0.4-4.0,H
+3617,Samuel Achterberg,1983/8/25,09/02/2025 08:00,Lipid Panel,LDL Cholesterol,128,mg/dL,<100,H
+0003617,Samuel Achterberg,"August 25, 1983",02-Sep-2025,Lipid Panel,HDL Cholesterol,52,mg/dL,40-100,
+0003617,"ACHTERBERG, SAMUEL",1983-08-25,2025-09-02 08:00,Lipid Panel,Total Cholesterol,172,mg/dL,<200,
+4007,Keiko Watanabe,01/12/1979,08/21/2025 18:00,CBC,Hemoglobin,14.1,g/dL,12.0-17.5,
+0004007,Keiko Watanabe,1979-01-12,2025-08-21 18:00,CBC,WBC,7.2,10*3/uL,4.0-11.0,
+0004007,"Watanabe, Keiko",1/12/79,08/21/2025 18:00,CBC,Platelets,255,10*3/uL,150-400,
+4394,"Castellanos, Ruben",1988-05-02,09/02/2025 19:00,BMP,Sodium,139,mmol/L,135-145,
+0004394,"CASTELLANOS, RUBEN",05/02/1988,2025-09-02 19:00,BMP,Potassium,4.2,mmol/L,3.5-5.1,
+MRN 0004394,"CASTELLANOS, RUBEN",1988/5/2,09/02/2025 19:00,BMP,Creatinine,1.3,mg/dL,0.6-1.3,
+0004394,Ruben Castellanos,5/2/88,09/02/2025 19:00,BMP,Glucose,92,mg/dL,70-99,
+MRN-0005489,"Benali, Fatima",07 Feb 1986,08/09/2025 13:00,CBC,Hemoglobin,7.9,g/dL,12.0-17.5,L
+MRN 0005489,Fatima Benali,"February 7, 1986",09-Aug-2025,CBC,WBC,7.2,10*3/uL,4.0-11.0,
+mrn5489,"BENALI, FATIMA","February 7, 1986",09-Aug-2025,CBC,Platelets,452,10*3/uL,150-400,H
+MRN 0005851,"Brandt, Oskar",12/31/1966,11/13/2024 10:00,HbA1c,Hemoglobin A1c,9.4,%,4.0-5.6,H
+MRN 0005851,"Brandt, Oskar",1966/12/31,13-Nov-2024,BMP,Sodium,139,mmol/L,135-145,
+MRN 0005851,"BRANDT, OSKAR",31 Dec 1966,13-Nov-2024,BMP,Potassium,4.2,mmol/L,3.5-5.1,
+MRN 0005851,"BRANDT, OSKAR",12/31/66,13-Nov-2024,BMP,Creatinine,0.9,mg/dL,0.6-1.3,
+5851,"BRANDT, OSKAR",1966-12-31,11/13/2024 10:00,BMP,Glucose,212,mg/dL,70-99,H
+5851,"Brandt, Oskar","December 31, 1966",11/13/2024 10:00,Lipid Panel,LDL Cholesterol,162,mg/dL,<100,H
+mrn5851,Oskar Brandt,31 Dec 1966,11/13/2024 10:00,Lipid Panel,HDL Cholesterol,52,mg/dL,40-100,
+MRN-0005851,"Brandt, Oskar",31 Dec 1966,13-Nov-2024,Lipid Panel,Total Cholesterol,248,mg/dL,<200,H
+5851,Oskar Brandt,"December 31, 1966",08/16/2025 10:00,BMP,Sodium,139,mmol/L,135-145,
+mrn5851,"BRANDT, OSKAR",12/31/66,16-Aug-2025,BMP,Potassium,4.2,mmol/L,3.5-5.1,
+MRN 0005851,"BRANDT, OSKAR",12/31/66,16-Aug-2025,BMP,Creatinine,0.9,mg/dL,0.6-1.3,
+MRN-0005851,"Brandt, Oskar",12/31/66,2025-08-16 10:00,BMP,Glucose,92,mg/dL,70-99,
+0005851,"BRANDT, OSKAR","December 31, 1966",08/16/2025 10:00,Lipid Panel,LDL Cholesterol,131,mg/dL,<100,H
+5851,"BRANDT, OSKAR",12/31/66,16-Aug-2025,Lipid Panel,HDL Cholesterol,52,mg/dL,40-100,
+mrn5851,Oskar Brandt,1966/12/31,08/16/2025 10:00,Lipid Panel,Total Cholesterol,172,mg/dL,<200,
+mrn6227,"Harrow, Lucinda","August 8, 1940",03/10/2025 10:00,BMP,Sodium,139,mmol/L,135-145,
+MRN 0006227,"Harrow, Lucinda",8/8/40,03/10/2025 10:00,BMP,Potassium,5.6,mmol/L,3.5-5.1,H
+MRN-0006227,"Harrow, Lucinda",08/08/1940,2025-03-10 10:00,BMP,Creatinine,2.1,mg/dL,0.6-1.3,H
+0006227,"Harrow, Lucinda",8/8/40,10-Mar-2025,BMP,Glucose,92,mg/dL,70-99,
+0006227,"Harrow, Lucinda",08 Aug 1940,03/10/2025 10:00,CBC,Hemoglobin,9.8,g/dL,12.0-17.5,L
+MRN-0006227,Lucinda Harrow,1940-08-08,2025-03-10 10:00,CBC,WBC,7.2,10*3/uL,4.0-11.0,
+0006227,"Harrow, Lucinda",1940-08-08,10-Mar-2025,CBC,Platelets,255,10*3/uL,150-400,
+6227,"Harrow, Lucinda",1940/8/8,2025-08-26 08:00,CBC,Hemoglobin,14.1,g/dL,12.0-17.5,
+MRN 0006227,Lucinda Harrow,1940/8/8,2025-08-26 08:00,CBC,WBC,18.9,10*3/uL,4.0-11.0,H
+mrn6227,"HARROW, LUCINDA",08 Aug 1940,08/26/2025 08:00,CBC,Platelets,255,10*3/uL,150-400,
+0006227,"HARROW, LUCINDA",1940/8/8,08/26/2025 08:00,BMP,Sodium,133,mmol/L,135-145,L
+0006227,Lucinda Harrow,1940-08-08,26-Aug-2025,BMP,Potassium,4.2,mmol/L,3.5-5.1,
+mrn6227,Lucinda Harrow,1940/8/8,08/26/2025 08:00,BMP,Creatinine,1.8,mg/dL,0.6-1.3,H
+6227,"HARROW, LUCINDA",08 Aug 1940,08/26/2025 08:00,BMP,Glucose,92,mg/dL,70-99,
+6622,"Ibarra, Mateo",15 Mar 2001,2025-05-17 16:00,CBC,Hemoglobin,14.1,g/dL,12.0-17.5,
+0006622,"IBARRA, MATEO",15 Mar 2001,17-May-2025,CBC,WBC,7.2,10*3/uL,4.0-11.0,
+MRN 0006622,Mateo Ibarra,2001-03-15,17-May-2025,CBC,Platelets,255,10*3/uL,150-400,
+MRN 0001020,"QUINTERO, MARISOL",1958-02-14,2024-11-28 10:00,Lipid Panel,LDL Cholesterol,131,mg/dL,<100,H
+0001020,"Quintero, Marisol",14 Feb 1958,28-Nov-2024,Lipid Panel,HDL Cholesterol,52,mg/dL,40-100,
+MRN 0001020,"QUINTERO, MARISOL",2/14/58,2024-11-28 10:00,Lipid Panel,Total Cholesterol,172,mg/dL,<200,

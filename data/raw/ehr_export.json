@@ -1,0 +1,673 @@
+{
+  "export_date": "2025-10-01",
+  "records": [
+    {
+      "record_id": "REC-00017",
+      "source_system": "EpicSim",
+      "patient": {
+        "mrn": "0005851",
+        "first_name": "Oskar",
+        "last_name": "Brandt",
+        "date_of_birth": "1966/12/31",
+        "gender": "1"
+      },
+      "encounter": {
+        "id": "ENC-00017",
+        "start": "2024-11-13T09:00:00Z",
+        "class": "outpatient",
+        "reason": "Follow-up for diabetes"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "date": "2024-11-13",
+          "text": "PROGRESS NOTE\nReason for Visit: Follow-up for diabetes.\nSubjective: 57-year-old man. Here for routine diabetes follow-up. Reports inconsistent metformin use and increased thirst.\nObjective: Foot exam normal. Monofilament sensation intact. Retinal exam due.\nAssessment:\n1. Type 2 diabetes mellitus with hyperglycemia\n2. Obesity\n3. Hyperlipidemia\nPlan: Increase metformin to 1000 mg BID, start atorvastatin 40 mg nightly, refer to diabetes education, repeat A1c in 3 months."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00003",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "mrn1382",
+        "first_name": "Theodore",
+        "last_name": "Banks",
+        "date_of_birth": "November 3, 1949",
+        "sex": "MALE"
+      },
+      "encounter": {
+        "id": "ENC-00003",
+        "admit_date": "10/26/2024 09:00",
+        "class": "inpatient",
+        "reason": "Worsening shortness of breath"
+      },
+      "documents": [
+        {
+          "doc_type": "discharge_summary",
+          "title": "Discharge Summary",
+          "authored": "2024-10-29T09:00:00",
+          "text": "DISCHARGE SUMMARY\nChief Complaint: Worsening shortness of breath.\nHistory of Present Illness: 75-year-old man presenting with worsening shortness of breath. Increased dyspnea, wheeze and sputum production for 3 days. 40 pack-year smoking history.\nHospital Course: Treated with nebulized bronchodilators, prednisone 40 mg and doxycycline. Ambulatory saturation 91% on room air at discharge.\nDischarge Diagnoses:\n1. COPD with acute exacerbation\n2. Tobacco use disorder\nDischarge Plan: Prednisone taper, tiotropium daily, smoking cessation counseling, pulmonology follow-up."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "XR Chest 2 Views",
+          "date": "2024-10-26T14:00:00Z",
+          "text": "XR CHEST 2 VIEWS\nClinical Indication: Worsening shortness of breath.\nTechnique: Standard protocol.\nFindings: Hyperinflated lungs with flattened hemidiaphragms. No focal consolidation or effusion.\nImpression: Hyperinflation consistent with COPD. No acute process."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00019",
+      "source_system": "EpicSim",
+      "patient": {
+        "mrn": "6227",
+        "name": "HARROW, Lucinda",
+        "DOB": "08 Aug 1940",
+        "sex": "FEMALE"
+      },
+      "encounter": {
+        "id": "ENC-00019",
+        "admit_date": "2025-03-10",
+        "class": "outpatient",
+        "reason": "Nephrology follow-up for chronic kidney disease"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "date": "2025-03-10T09:00:00",
+          "text": "PROGRESS NOTE\nReason for Visit: Nephrology follow-up for chronic kidney disease.\nSubjective: 84-year-old woman. Known CKD secondary to hypertensive nephrosclerosis. Reports mild fatigue. No edema.\nObjective: Creatinine above prior baseline of 1.8. Potassium elevated.\nAssessment:\n1. Chronic kidney disease stage 3b\n2. Anemia of chronic kidney disease\nPlan: Low-potassium diet, hold lisinopril pending repeat BMP in 1 week, start ESA evaluation."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "US Renal Bilateral",
+          "date": "2025-03-10",
+          "text": "US RENAL BILATERAL\nClinical Indication: Nephrology follow-up for chronic kidney disease.\nTechnique: Standard protocol.\nFindings: Right kidney 9.1 cm, left kidney 9.4 cm. Increased cortical echogenicity bilaterally. No hydronephrosis.\nImpression: Bilateral echogenic kidneys consistent with medical renal disease. No hydronephrosis."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00007",
+      "source_system": "EpicSim",
+      "patient": {
+        "mrn": "MRN-0002160",
+        "first_name": "Gregor",
+        "last_name": "Lindqvist",
+        "DOB": "09/30/1955",
+        "sex": "1"
+      },
+      "encounter": {
+        "id": "ENC-00007",
+        "admit_date": "2025-07-02T07:00:00",
+        "class": "outpatient",
+        "reason": "Nephrology follow-up for chronic kidney disease"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "created": "07/02/2025 07:00",
+          "text": "PROGRESS NOTE\nReason for Visit: Nephrology follow-up for chronic kidney disease.\nSubjective: 69-year-old man. Known CKD secondary to hypertensive nephrosclerosis. Reports mild fatigue. No edema.\nObjective: Creatinine above prior baseline of 1.8. Potassium elevated.\nAssessment:\n1. Chronic kidney disease stage 3b\n2. Anemia of chronic kidney disease\nPlan: Low-potassium diet, hold lisinopril pending repeat BMP in 1 week, start ESA evaluation."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "US Renal Bilateral",
+          "date": "2025-07-02",
+          "text": "US RENAL BILATERAL\nClinical Indication: Nephrology follow-up for chronic kidney disease.\nTechnique: Standard protocol.\nFindings: Right kidney 9.1 cm, left kidney 9.4 cm. Increased cortical echogenicity bilaterally. No hydronephrosis.\nImpression: Bilateral echogenic kidneys consistent with medical renal disease. No hydronephrosis."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00011",
+      "source_system": "EpicSim",
+      "patient": {
+        "mrn": "MRN 0003617",
+        "first_name": "Samuel",
+        "last_name": "Achterberg",
+        "dob": "25 Aug 1983",
+        "gender": "M"
+      },
+      "encounter": {
+        "id": "ENC-00011",
+        "start": "2025-09-02",
+        "class": "outpatient",
+        "reason": "Fatigue and weight gain"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "authored": "2025-09-02T07:00:00Z",
+          "text": "PROGRESS NOTE\nReason for Visit: Fatigue and weight gain.\nSubjective: 42-year-old man. Six months of fatigue, cold intolerance, constipation and 5 kg weight gain.\nObjective: Thyroid not enlarged on exam. Delayed relaxation of reflexes.\nAssessment:\n1. Primary hypothyroidism\nPlan: Start levothyroxine 50 mcg daily, repeat TSH in 6 weeks."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00009",
+      "source_system": "EpicSim",
+      "patient": {
+        "mrn": "0002869",
+        "name": "Jonah Feld",
+        "birthDate": "09 Dec 1994",
+        "gender": "male"
+      },
+      "encounter": {
+        "id": "ENC-00009",
+        "admit_date": "2025-07-31",
+        "class": "inpatient",
+        "reason": "Right lower quadrant abdominal pain"
+      },
+      "documents": [
+        {
+          "doc_type": "discharge_summary",
+          "title": "Discharge Summary",
+          "date": "2025-08-03T17:00:00",
+          "text": "DISCHARGE SUMMARY\nChief Complaint: Right lower quadrant abdominal pain.\nHistory of Present Illness: 30-year-old man presenting with right lower quadrant abdominal pain. Periumbilical pain migrating to the right lower quadrant over 18 hours with anorexia and nausea.\nHospital Course: Underwent uncomplicated laparoscopic appendectomy. Tolerated diet on postoperative day 1.\nDischarge Diagnoses:\n1. Acute appendicitis, status post laparoscopic appendectomy\nDischarge Plan: No lifting over 10 lb for 2 weeks. Surgical clinic follow-up in 10 days."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "CT Abdomen and Pelvis with Contrast",
+          "date": "07/31/2025 21:00",
+          "text": "CT ABDOMEN AND PELVIS WITH CONTRAST\nClinical Indication: Right lower quadrant abdominal pain.\nTechnique: Standard protocol.\nFindings: Dilated appendix measuring 11 mm with periappendiceal fat stranding. No abscess or free air.\nImpression: Acute appendicitis without perforation."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00012",
+      "source_system": "EpicSim",
+      "patient": {
+        "mrn": "MRN-0004007",
+        "first_name": "Keiko",
+        "last_name": "Watanabe",
+        "date_of_birth": "1979/1/12",
+        "sex": "2"
+      },
+      "encounter": {
+        "id": "ENC-00012",
+        "date": "2025-08-21T17:00:00Z",
+        "class": "emergency",
+        "reason": "Left calf pain and swelling"
+      },
+      "documents": [
+        {
+          "doc_type": "ed_note",
+          "title": "ED Provider Note",
+          "created": "08/21/2025 17:00",
+          "text": "EMERGENCY DEPARTMENT NOTE\nChief Complaint: Left calf pain and swelling.\nHPI: 46-year-old woman with left calf pain and swelling. Three days of left calf pain and swelling after a 9-hour flight. No chest pain or dyspnea.\nED Course: Left calf circumference 3 cm greater than right. Wells score 3.\nAssessment:\n1. Deep vein thrombosis, left popliteal vein\nDisposition and Plan: Start rivaroxaban 15 mg BID for 21 days then 20 mg daily. Return precautions for chest pain or dyspnea."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "US Venous Duplex Left Lower Extremity",
+          "performed": "2025-08-21",
+          "text": "US VENOUS DUPLEX LEFT LOWER EXTREMITY\nClinical Indication: Left calf pain and swelling.\nTechnique: Standard protocol.\nFindings: Non-compressible left popliteal and posterior tibial veins with occlusive echogenic thrombus.\nImpression: Acute occlusive deep vein thrombosis of the left popliteal and posterior tibial veins."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00004",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "0001382",
+        "name": "Theodore Banks",
+        "dob": "1949-11-03",
+        "sex": "MALE"
+      },
+      "encounter": {
+        "id": "ENC-00004",
+        "date": "07/27/2025 19:00",
+        "class": "inpatient",
+        "reason": "Fever and productive cough"
+      },
+      "documents": [
+        {
+          "doc_type": "discharge_summary",
+          "title": "Discharge Summary",
+          "date": "2025-07-30T19:00:00Z",
+          "text": "DISCHARGE SUMMARY\nChief Complaint: Fever and productive cough.\nHistory of Present Illness: 75-year-old man presenting with fever and productive cough. Four days of fever to 39.2 C, productive cough with rust-colored sputum and pleuritic right-sided chest pain.\nHospital Course: Treated with ceftriaxone and azithromycin. Defervesced by hospital day 2. Oxygen weaned to room air.\nDischarge Diagnoses:\n1. Community-acquired pneumonia, right lower lobe\nDischarge Plan: Complete 5-day course of oral amoxicillin-clavulanate. Repeat chest x-ray in 6 weeks."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "XR Chest PA and Lateral",
+          "performed": "2025-07-27",
+          "text": "XR CHEST PA AND LATERAL\nClinical Indication: Fever and productive cough.\nTechnique: Standard protocol.\nFindings: Dense airspace opacity in the right lower lobe with air bronchograms. No pneumothorax.\nImpression: Right lower lobe consolidation consistent with pneumonia."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00002",
+      "source_system": "EpicSim",
+      "patient": {
+        "mrn": "MRN 0001020",
+        "first_name": "Marisol",
+        "last_name": "Quintero",
+        "DOB": "14 Feb 1958",
+        "gender": "F"
+      },
+      "encounter": {
+        "id": "ENC-00002",
+        "admit_date": "2025-09-16T10:00:00",
+        "class": "inpatient",
+        "reason": "Shortness of breath and bilateral leg swelling"
+      },
+      "documents": [
+        {
+          "doc_type": "discharge_summary",
+          "title": "Discharge Summary",
+          "date": "2025-09-19T10:00:00Z",
+          "text": "DISCHARGE SUMMARY\nChief Complaint: Shortness of breath and bilateral leg swelling.\nHistory of Present Illness: 67-year-old woman presenting with shortness of breath and bilateral leg swelling. Progressive exertional dyspnea over 10 days, 3-pillow orthopnea and a 4 kg weight gain. Reports running out of furosemide two weeks ago.\nHospital Course: Diuresed with IV furosemide with net negative 5.2 L. Transitioned to oral diuretic. Echocardiogram showed LVEF 30%.\nDischarge Diagnoses:\n1. Acute on chronic systolic heart failure\n2. Essential hypertension\nDischarge Plan: Furosemide 40 mg PO daily, daily weights, low-sodium diet, cardiology follow-up in 1 week."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "XR Chest 2 Views",
+          "performed": "2025-09-16T13:00:00Z",
+          "text": "XR CHEST 2 VIEWS\nClinical Indication: Shortness of breath and bilateral leg swelling.\nTechnique: Standard protocol.\nFindings: Enlarged cardiac silhouette. Bilateral small pleural effusions. Pulmonary vascular congestion.\nImpression: Cardiomegaly with pulmonary edema and bilateral pleural effusions."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00018",
+      "source_system": "EpicSim",
+      "patient": {
+        "MRN": "MRN 0005851",
+        "first_name": "Oskar",
+        "last_name": "Brandt",
+        "date_of_birth": "12/31/1966",
+        "gender": "Male"
+      },
+      "encounter": {
+        "id": "ENC-00018",
+        "start": "2025-08-16T09:00:00Z",
+        "class": "outpatient",
+        "reason": "Hypertension follow-up"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "date": "2025-08-16T09:00:00Z",
+          "text": "PROGRESS NOTE\nReason for Visit: Hypertension follow-up.\nSubjective: 58-year-old man. Home blood pressures averaging 152/94. Adherent to amlodipine. No headache or chest pain.\nObjective: Office blood pressure 156/96.\nAssessment:\n1. Essential hypertension\n2. Hyperlipidemia\nPlan: Add chlorthalidone 12.5 mg daily, repeat BMP in 2 weeks, continue home monitoring."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00013",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "4394",
+        "name": "Ruben Castellanos",
+        "birthDate": "1988-05-02",
+        "sex": "M"
+      },
+      "encounter": {
+        "id": "ENC-00013",
+        "start": "09/02/2025 18:00",
+        "class": "emergency",
+        "reason": "Right flank pain"
+      },
+      "documents": [
+        {
+          "doc_type": "ed_note",
+          "title": "ED Provider Note",
+          "text": "EMERGENCY DEPARTMENT NOTE\nChief Complaint: Right flank pain.\nHPI: 37-year-old man with right flank pain. Sudden severe colicky right flank pain radiating to the groin with nausea and gross hematuria.\nED Course: Pain controlled with ketorolac. Tolerating oral intake.\nAssessment:\n1. Right ureteral calculus with hydronephrosis\nDisposition and Plan: Tamsulosin 0.4 mg daily, strain urine, urology follow-up within 1 week, return if fever."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "CT Abdomen and Pelvis without Contrast",
+          "date": "2025-09-02T22:00:00",
+          "text": "CT ABDOMEN AND PELVIS WITHOUT CONTRAST\nClinical Indication: Right flank pain.\nTechnique: Standard protocol.\nFindings: 6 mm calculus at the right ureterovesical junction with mild right hydroureteronephrosis.\nImpression: Obstructing 6 mm right UVJ calculus with mild hydronephrosis."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00021",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "6622",
+        "name": "Mateo Ibarra",
+        "gender": "1"
+      },
+      "encounter": {
+        "id": "ENC-00021",
+        "start": "2025-05-17T15:00:00",
+        "class": "emergency",
+        "reason": "Wheezing and chest tightness"
+      },
+      "documents": [
+        {
+          "doc_type": "ed_note",
+          "title": "ED Provider Note",
+          "date": "2025-05-17",
+          "text": "EMERGENCY DEPARTMENT NOTE\nChief Complaint: Wheezing and chest tightness.\nHPI: 24-year-old man with wheezing and chest tightness. Two days of wheezing after a viral illness. Using albuterol every 3 hours.\nED Course: Improved after three albuterol-ipratropium nebulizers and oral dexamethasone. Peak flow 78% predicted at discharge.\nAssessment:\n1. Moderate persistent asthma with acute exacerbation\nDisposition and Plan: Start budesonide-formoterol, albuterol as needed, asthma action plan reviewed."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00015",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "mrn5135",
+        "first_name": "Darnell",
+        "last_name": "Whitfield",
+        "dob": "April 28, 1976",
+        "gender": "male"
+      },
+      "encounter": {
+        "id": "ENC-00015",
+        "date": "2025-09-21",
+        "class": "outpatient",
+        "reason": "Low back pain radiating to left leg"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "created": "2025-09-21",
+          "text": "PROGRESS NOTE\nReason for Visit: Low back pain radiating to left leg.\nSubjective: 49-year-old man. Eight weeks of low back pain radiating down the posterior left leg to the foot. Failed 6 weeks of physical therapy.\nObjective: Positive straight leg raise on the left. Strength 5/5. No bowel or bladder symptoms.\nAssessment:\n1. Lumbar disc herniation L4-L5 with left radiculopathy\nPlan: Refer to spine clinic for epidural steroid injection evaluation, continue physical therapy."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "MRI Lumbar Spine without Contrast",
+          "date": "09/21/2025 22:00",
+          "text": "MRI LUMBAR SPINE WITHOUT CONTRAST\nClinical Indication: Low back pain radiating to left leg.\nTechnique: Standard protocol.\nFindings: Left paracentral disc extrusion at L4-L5 with left lateral recess stenosis contacting the descending L5 nerve root.\nImpression: L4-L5 left paracentral disc extrusion with left lateral recess stenosis."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00022",
+      "source_system": "EpicSim",
+      "patient": {
+        "MRN": "MRN-0002495",
+        "name": "Priya Raman",
+        "dob": "1961-04-07",
+        "sex": "F"
+      },
+      "encounter": {
+        "id": "ENC-00022",
+        "date": "2025-09-30",
+        "class": "outpatient",
+        "reason": "Post-TIA follow-up"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Neurology Follow-up",
+          "date": "2025-09-30",
+          "text": "PROGRESS NOTE\nReason for Visit: Post-TIA follow-up.\nSubjective: No recurrent focal symptoms. Tolerating apixaban without bleeding.\nObjective: Neurologic exam normal. Echocardiogram showed mildly dilated left atrium, LVEF 60%.\nAssessment:\n1. Transient ischemic attack, resolved\n2. Atrial fibrillation on anticoagulation\nPlan: Continue apixaban and atorvastatin. Recheck lipid panel in 3 months."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00020",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "mrn6227",
+        "first_name": "Lucinda",
+        "last_name": "Harrow",
+        "date_of_birth": "08 Aug 1940",
+        "gender": "FEMALE"
+      },
+      "encounter": {
+        "id": "ENC-00020",
+        "start": "2025-08-26T07:00:00Z",
+        "class": "inpatient",
+        "reason": "Fever and confusion"
+      },
+      "documents": [
+        {
+          "doc_type": "discharge_summary",
+          "title": "Discharge Summary",
+          "authored": "08/29/2025 07:00",
+          "text": "DISCHARGE SUMMARY\nChief Complaint: Fever and confusion.\nHistory of Present Illness: 85-year-old woman presenting with fever and confusion. Brought in by family for 1 day of confusion, fever to 38.9 C and dysuria.\nHospital Course: Blood and urine cultures grew E. coli. Treated with IV ceftriaxone and fluids. Mental status returned to baseline.\nDischarge Diagnoses:\n1. Sepsis due to urinary tract infection\n2. Acute kidney injury\nDischarge Plan: Oral cephalexin to complete 10 days, repeat BMP in 1 week, primary care follow-up."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00008",
+      "source_system": "EpicSim",
+      "patient": {
+        "MRN": "mrn2495",
+        "first_name": "Priya",
+        "last_name": "Raman",
+        "DOB": "1961/7/4",
+        "gender": "female"
+      },
+      "encounter": {
+        "id": "ENC-00008",
+        "date": "2025-08-17T14:00:00Z",
+        "class": "emergency",
+        "reason": "Sudden left arm weakness"
+      },
+      "documents": [
+        {
+          "doc_type": "ed_note",
+          "title": "ED Provider Note",
+          "created": "08/17/2025 14:00",
+          "text": "EMERGENCY DEPARTMENT NOTE\nChief Complaint: Sudden left arm weakness.\nHPI: 64-year-old woman with sudden left arm weakness. Twenty minutes of left arm weakness and slurred speech that fully resolved before arrival.\nED Course: Neurologic exam normal on arrival. Telemetry showed atrial fibrillation with rates 90-110.\nAssessment:\n1. Transient ischemic attack\n2. Atrial fibrillation, new onset\nDisposition and Plan: Start apixaban 5 mg BID, atorvastatin 80 mg, outpatient echocardiogram and neurology follow-up."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "CT Head without Contrast",
+          "performed": "08/17/2025 16:00",
+          "text": "CT HEAD WITHOUT CONTRAST\nClinical Indication: Sudden left arm weakness.\nTechnique: Standard protocol.\nFindings: No acute intracranial hemorrhage, mass effect, or territorial infarct. Mild chronic small vessel ischemic change.\nImpression: No acute intracranial abnormality."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00003",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "mrn1382",
+        "first_name": "Theodore",
+        "last_name": "Banks",
+        "date_of_birth": "November 3, 1949",
+        "sex": "MALE"
+      },
+      "encounter": {
+        "id": "ENC-00003",
+        "admit_date": "10/26/2024 09:00",
+        "class": "inpatient",
+        "reason": "Worsening shortness of breath"
+      },
+      "documents": [
+        {
+          "doc_type": "discharge_summary",
+          "title": "Discharge Summary",
+          "authored": "2024-10-29T09:00:00",
+          "text": "DISCHARGE SUMMARY\nChief Complaint: Worsening shortness of breath.\nHistory of Present Illness: 75-year-old man presenting with worsening shortness of breath. Increased dyspnea, wheeze and sputum production for 3 days. 40 pack-year smoking history.\nHospital Course: Treated with nebulized bronchodilators, prednisone 40 mg and doxycycline. Ambulatory saturation 91% on room air at discharge.\nDischarge Diagnoses:\n1. COPD with acute exacerbation\n2. Tobacco use disorder\nDischarge Plan: Prednisone taper, tiotropium daily, smoking cessation counseling, pulmonology follow-up."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "XR Chest 2 Views",
+          "date": "2024-10-26T14:00:00Z",
+          "text": "XR CHEST 2 VIEWS\nClinical Indication: Worsening shortness of breath.\nTechnique: Standard protocol.\nFindings: Hyperinflated lungs with flattened hemidiaphragms. No focal consolidation or effusion.\nImpression: Hyperinflation consistent with COPD. No acute process."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00010",
+      "source_system": "EpicSim",
+      "patient": {
+        "mrn": "3272",
+        "first_name": "Delphine",
+        "last_name": "Moreau",
+        "DOB": "1947/3/17",
+        "sex": "F"
+      },
+      "encounter": {
+        "id": "ENC-00010",
+        "start": "2025-06-19T13:00:00",
+        "class": "inpatient",
+        "reason": "Worsening shortness of breath"
+      },
+      "documents": [
+        {
+          "doc_type": "discharge_summary",
+          "title": "Discharge Summary",
+          "created": "2025-06-22T13:00:00",
+          "text": "DISCHARGE SUMMARY\nChief Complaint: Worsening shortness of breath.\nHistory of Present Illness: 78-year-old woman presenting with worsening shortness of breath. Increased dyspnea, wheeze and sputum production for 3 days. 40 pack-year smoking history.\nHospital Course: Treated with nebulized bronchodilators, prednisone 40 mg and doxycycline. Ambulatory saturation 91% on room air at discharge.\nDischarge Diagnoses:\n1. COPD with acute exacerbation\n2. Tobacco use disorder\nDischarge Plan: Prednisone taper, tiotropium daily, smoking cessation counseling, pulmonology follow-up."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "XR Chest 2 Views",
+          "performed": "2025-06-19T17:00:00",
+          "text": "XR CHEST 2 VIEWS\nClinical Indication: Worsening shortness of breath.\nTechnique: Standard protocol.\nFindings: Hyperinflated lungs with flattened hemidiaphragms. No focal consolidation or effusion.\nImpression: Hyperinflation consistent with COPD. No acute process."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00001",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "MRN-0001020",
+        "name": "Marisol Quintero",
+        "DOB": "1958-02-14",
+        "gender": "FEMALE"
+      },
+      "encounter": {
+        "id": "ENC-00001",
+        "start": "2024-11-28",
+        "class": "outpatient",
+        "reason": "Hypertension follow-up"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "date": "2024-11-28T09:00:00Z",
+          "text": "PROGRESS NOTE\nReason for Visit: Hypertension follow-up.\nSubjective: 66-year-old woman. Home blood pressures averaging 152/94. Adherent to amlodipine. No headache or chest pain.\nObjective: Office blood pressure 156/96.\nAssessment:\n1. Essential hypertension\n2. Hyperlipidemia\nPlan: Add chlorthalidone 12.5 mg daily, repeat BMP in 2 weeks, continue home monitoring."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00006",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "mrn2160",
+        "first_name": "Gregor",
+        "last_name": "Lindqvist",
+        "birthDate": "1955-09-30",
+        "sex": "MALE"
+      },
+      "encounter": {
+        "id": "ENC-00006",
+        "admit_date": "2025-02-26",
+        "class": "outpatient",
+        "reason": "Hypertension follow-up"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "date": "02/26/2025 09:00",
+          "text": "PROGRESS NOTE\nReason for Visit: Hypertension follow-up.\nSubjective: 69-year-old man. Home blood pressures averaging 152/94. Adherent to amlodipine. No headache or chest pain.\nObjective: Office blood pressure 156/96.\nAssessment:\n1. Essential hypertension\n2. Hyperlipidemia\nPlan: Add chlorthalidone 12.5 mg daily, repeat BMP in 2 weeks, continue home monitoring."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-90001",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "mrn2160",
+        "first_name": "Gregor",
+        "last_name": "Lindqvist",
+        "birthDate": "1955-09-30",
+        "sex": "MALE"
+      },
+      "encounter": {
+        "id": "ENC-00006",
+        "admit_date": "2025-02-26",
+        "class": "outpatient",
+        "reason": "Hypertension follow-up"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "date": "02/26/2025 09:00",
+          "text": "  PROGRESS NOTE\nReason for Visit: Hypertension follow-up.\nSubjective: 69-year-old man.  Home blood pressures averaging 152/94.  Adherent to amlodipine.  No headache or chest pain.\nObjective: Office blood pressure 156/96.\nAssessment:\n1.  Essential hypertension\n2.  Hyperlipidemia\nPlan: Add chlorthalidone 12.5 mg daily, repeat BMP in 2 weeks, continue home monitoring.\n"
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00005",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "MRN-0001771",
+        "first_name": "Aaliyah",
+        "last_name": "Okafor",
+        "birthDate": "June 21, 1972",
+        "sex": "Female"
+      },
+      "encounter": {
+        "id": "ENC-00005",
+        "start": "2025-08-21",
+        "class": "outpatient",
+        "reason": "Follow-up for diabetes"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "created": "2025-08-21T14:00:00",
+          "text": "PROGRESS NOTE\nReason for Visit: Follow-up for diabetes.\nSubjective: 53-year-old woman. Here for routine diabetes follow-up. Reports inconsistent metformin use and increased thirst.\nObjective: Foot exam normal. Monofilament sensation intact. Retinal exam due.\nAssessment:\n1. Type 2 diabetes mellitus with hyperglycemia\n2. Obesity\n3. Hyperlipidemia\nPlan: Increase metformin to 1000 mg BID, start atorvastatin 40 mg nightly, refer to diabetes education, repeat A1c in 3 months."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00016",
+      "source_system": "EpicSim",
+      "patient": {
+        "medical_record_number": "MRN 0005489",
+        "first_name": "Fatima",
+        "last_name": "Benali",
+        "birthDate": "1986/2/7",
+        "gender": "F"
+      },
+      "encounter": {
+        "id": "ENC-00016",
+        "admit_date": "2025-08-09T12:00:00Z",
+        "class": "outpatient",
+        "reason": "Fatigue and lightheadedness"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "date": "2025-08-09",
+          "text": "PROGRESS NOTE\nReason for Visit: Fatigue and lightheadedness.\nSubjective: 39-year-old woman. Two months of fatigue, exertional lightheadedness and heavy menstrual bleeding.\nObjective: Conjunctival pallor. Ferritin 6 ng/mL.\nAssessment:\n1. Iron deficiency anemia\nPlan: Ferrous sulfate 325 mg every other day, gynecology referral, repeat CBC in 4 weeks."
+        }
+      ]
+    },
+    {
+      "record_id": "REC-00014",
+      "source_system": "EpicSim",
+      "patient": {
+        "MRN": "4733",
+        "first_name": "Imogen",
+        "last_name": "Thackeray",
+        "DOB": "10/19/1991"
+      },
+      "encounter": {
+        "id": "ENC-00014",
+        "admit_date": "2025-08-17T12:00:00",
+        "class": "outpatient",
+        "reason": "Recurrent headaches"
+      },
+      "documents": [
+        {
+          "doc_type": "progress_note",
+          "title": "Office Visit Note",
+          "date": "08/17/2025 12:00",
+          "text": "PROGRESS NOTE\nReason for Visit: Recurrent headaches.\nSubjective: 33-year-old woman. Throbbing unilateral headaches 3-4 times per month with photophobia and nausea. No red-flag features.\nObjective: Neurologic exam normal. MRI obtained given change in headache pattern.\nAssessment:\n1. Migraine without aura\nPlan: Sumatriptan 50 mg as needed, headache diary, consider prophylaxis if frequency increases."
+        },
+        {
+          "doc_type": "imaging_report",
+          "title": "MRI Brain without Contrast",
+          "date": "2025-08-17T18:00:00Z",
+          "text": "MRI BRAIN WITHOUT CONTRAST\nClinical Indication: Recurrent headaches.\nTechnique: Standard protocol.\nFindings: Normal brain parenchyma. No mass, hemorrhage or abnormal enhancement.\nImpression: Normal MRI of the brain."
+        }
+      ]
+    }
+  ]
+}

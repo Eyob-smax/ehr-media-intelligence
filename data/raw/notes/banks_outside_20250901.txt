@@ -1,0 +1,11 @@
+PATIENT: Theodore Banks    MRN: 1382
+DOB: 1949/11/3    SEX: 1
+DATE OF SERVICE: 2025/9/1
+DOCUMENT TYPE: Outside Radiology Report
+----------------------------------------
+  XR   CHEST PA AND LATERAL (OUTSIDE FACILITY)
+Findings: Interval   improvement of 
+right lower lobe opacity with residual patchy atelectasis. No 
+new consolidation.
+Impression: Improving   right lower lobe pneumonia.
+

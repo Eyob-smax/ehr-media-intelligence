@@ -1,0 +1,9 @@
+PATIENT: Aaliyah Okafor    MRN: MRN-0001771
+DOB: 1972-06-21    SEX: female
+DATE OF SERVICE: 2025/9/6
+DOCUMENT TYPE: Ophthalmology Report
+----------------------------------------
+Dilated retinal exam: mild nonproliferative diabetic retinopathy in 
+both eyes   without macular edema.   Recommend annual follow-up and 
+improved glycemic control.
+

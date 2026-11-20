@@ -1,0 +1,9 @@
+PATIENT: Keiko Watanabe    MRN: 4007
+DOB: January 12, 1979    SEX: Female
+DATE OF SERVICE: 26 Sep 2025
+DOCUMENT TYPE: Outside Records - Urgent Care
+----------------------------------------
+Urgent   care visit for left leg swelling. D-dimer elevated at 
+1.9 mg/L FEU. Referred to emergency department for duplex ultrasound 
+to rule out DVT.
+

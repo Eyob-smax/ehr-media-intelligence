@@ -1,0 +1,10 @@
+PATIENT: QUINTERO, MARISOL    MRN: 1020
+DOB: February 14, 1958    SEX: 2
+DATE OF SERVICE: 21 Sep 2025
+DOCUMENT TYPE: Cardiology Consult Letter
+----------------------------------------
+Dear colleague, I saw   Ms. Quintero for heart failure with reduced ejection fraction, LVEF 30 
+percent. She remains NYHA class III. I have started sacubitril-valsartan   and 
+metoprolol succinate. Please monitor potassium and creatinine 
+within one week.
+
