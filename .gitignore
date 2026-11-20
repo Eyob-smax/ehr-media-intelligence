@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Generated artifacts (rebuild with `python -m ehr.cli build`)
+data/output/
+data/store/
+
+# Secrets
+.env
+
+# Assessment brief (not part of the submission)
+NYCEDC - Onye 2026 AI Full-stack Assessment.pdf
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
