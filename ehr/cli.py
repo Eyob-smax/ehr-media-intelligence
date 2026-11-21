@@ -17,6 +17,8 @@ from .fhir.mapping import build_bundles
 from .fhir.store import BundleStore, write_bundle_files
 from .fhir.validation import build_report, dumps, report_markdown, validate_bundle
 from .ingest.pipeline import run_ingestion, write_outputs
+from .summarize.cache import SummaryCache
+from .summarize.service import SummaryService, make_summarizer
 
 log = logging.getLogger("ehr")
 
@@ -62,11 +64,29 @@ def cmd_fhir(s: Settings, ds) -> BundleStore:
     return store
 
 
+def cmd_summarize(s: Settings, store: BundleStore, force: bool) -> SummaryService:
+    summarizer = make_summarizer(s)
+    with _step(f"Task 3 · clinical summaries ({summarizer.name}: {summarizer.model})"):
+        svc = SummaryService(store, SummaryCache(s.db_path), summarizer)
+        summaries = svc.summarize_all(force=force)
+        out = s.out_dir / "summaries"
+        out.mkdir(parents=True, exist_ok=True)
+        for sm in summaries:
+            (out / f"{sm.patient_id}.json").write_text(sm.model_dump_json(indent=2))
+        levels = {lvl: sum(sm.confidence.level == lvl for sm in summaries) for lvl in ("high", "medium", "low")}
+        print(f"  {len(summaries)} summaries · generated {svc.stats['generated']} · cache hits "
+              f"{svc.stats['cache_hits']} · fallbacks {svc.stats['fallbacks']}")
+        print(f"  confidence {levels} · max {max(sm.word_count for sm in summaries)} words · "
+              f"{sum(bool(sm.quality_issues) for sm in summaries)} with quality issues")
+    return svc
+
+
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="ehr", description="EHR Media Intelligence pipeline")
     ap.add_argument("command", choices=["ingest", "build"])
     ap.add_argument("--reference-date", type=date.fromisoformat, default=None,
                     help="'today' for date sanity checks (defaults to the real current date)")
+    ap.add_argument("--force-summaries", action="store_true", help="ignore the summary cache and regenerate")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
@@ -75,7 +95,8 @@ def main(argv: list[str] | None = None) -> None:
     ds = cmd_ingest(s, args.reference_date)
     if args.command == "ingest":
         return
-    cmd_fhir(s, ds)
+    store = cmd_fhir(s, ds)
+    cmd_summarize(s, store, args.force_summaries)
 
 
 if __name__ == "__main__":
