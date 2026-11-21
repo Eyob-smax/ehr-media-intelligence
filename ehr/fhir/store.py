@@ -43,6 +43,11 @@ CREATE TABLE IF NOT EXISTS resources (
 );
 CREATE INDEX IF NOT EXISTS idx_resources_patient ON resources(patient_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_bundles_mrn ON bundles(mrn);
+CREATE TABLE IF NOT EXISTS identifiers (
+    mrn        TEXT PRIMARY KEY,
+    patient_id TEXT NOT NULL REFERENCES bundles(patient_id) ON DELETE CASCADE,
+    use        TEXT NOT NULL
+);
 """
 
 
@@ -72,11 +77,13 @@ class BundleStore:
 
     def save(self, patient_id: str, bundle: dict[str, Any], *, valid: bool = True,
              issues: list[dict] | None = None) -> str:
-        name, mrn = patient_display(bundle_patient(bundle))
+        patient = bundle_patient(bundle)
+        name, mrn = patient_display(patient)
         h = record_hash(bundle)
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         with self._conn() as c:
             c.execute("DELETE FROM resources WHERE patient_id = ?", (patient_id,))
+            c.execute("DELETE FROM identifiers WHERE patient_id = ?", (patient_id,))
             c.execute(
                 """INSERT INTO bundles (patient_id, bundle_id, mrn, patient_name, bundle_json, record_hash,
                                         resource_count, valid, issues_json, updated_at)
@@ -93,7 +100,29 @@ class BundleStore:
                 [(r.resource_id, patient_id, r.resource_type, r.category, r.title, r.date, r.conclusion, r.text)
                  for r in bundle_records(bundle)],
             )
+            # The Patient resource is indexed too so every search hit's resource_id resolves.
+            c.execute("INSERT INTO resources VALUES (?,?,?,?,?,?,?,?)",
+                      (patient["id"], patient_id, "Patient", "Patient", name, None, None, None))
+            c.executemany(
+                "INSERT OR REPLACE INTO identifiers VALUES (?,?,?)",
+                [(i["value"], patient_id, i.get("use", "usual")) for i in patient.get("identifier", [])
+                 if i.get("value")],
+            )
         return h
+
+    def patient_for_mrn(self, mrn: str) -> str | None:
+        """Resolve an official *or* merged (old) MRN to a patient id."""
+        with self._conn() as c:
+            row = c.execute("SELECT patient_id FROM identifiers WHERE mrn = ?", (mrn,)).fetchone()
+        return row["patient_id"] if row else None
+
+    def prune(self, keep: set[str]) -> int:
+        """Delete patients not in ``keep`` (e.g. merged away on a re-run). Returns rows removed."""
+        with self._conn() as c:
+            ids = [r["patient_id"] for r in c.execute("SELECT patient_id FROM bundles")]
+            stale = [(pid,) for pid in ids if pid not in keep]
+            c.executemany("DELETE FROM bundles WHERE patient_id = ?", stale)
+        return len(stale)
 
     def get_bundle(self, patient_id: str) -> dict[str, Any] | None:
         with self._conn() as c:
@@ -127,7 +156,8 @@ class BundleStore:
     def resources_for(self, patient_id: str) -> list[dict[str, Any]]:
         with self._conn() as c:
             rows = c.execute("""SELECT resource_id, resource_type, category, title, date, conclusion, text
-                                FROM resources WHERE patient_id = ? ORDER BY date DESC""", (patient_id,)).fetchall()
+                                FROM resources WHERE patient_id = ? AND resource_type != 'Patient'
+                                ORDER BY date DESC""", (patient_id,)).fetchall()
         return [dict(r) for r in rows]
 
     def get_resource(self, resource_id: str) -> dict[str, Any] | None:
