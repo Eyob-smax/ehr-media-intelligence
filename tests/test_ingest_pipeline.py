@@ -99,6 +99,23 @@ def test_same_mrn_different_people_are_not_merged_by_name_alone(tmp_path):
     assert len(ds.patients) == 2, "same name but different DOB and MRN must stay separate"
 
 
+def test_namesakes_registered_in_the_ehr_are_flagged_not_merged(tmp_path):
+    namesake = {**JANE, "mrn": "MRN-0000043"}  # same name + DOB, different EHR registration
+    ds = run_ingestion(_write(tmp_path, records=[_record("R1", JANE), _record("R2", namesake, enc_id="ENC-2")]),
+                       reference=REF)
+    assert len(ds.patients) == 2
+    assert any("possible duplicate" in i.message and "EHR export" in i.message for i in ds.issues)
+
+
+def test_secondary_source_mrn_that_is_not_a_typo_is_not_merged(tmp_path):
+    raw = _write(tmp_path, records=[_record("R1", JANE)], csv_rows=[
+        "9876543,\"Doe, Jane\",05/06/1970,03/01/2025 10:00,CBC,Hemoglobin,13.1,g/dL,12.0-17.5,",
+    ])
+    ds = run_ingestion(raw, reference=REF)
+    assert len(ds.patients) == 2
+    assert any("more than a typical keying error" in i.message for i in ds.issues)
+
+
 def test_birth_date_conflict_keeps_majority_and_flags_day_month_swap(tmp_path):
     swapped = {**JANE, "dob": "1970-06-05"}
     raw = _write(tmp_path, records=[

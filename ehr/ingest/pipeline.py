@@ -121,6 +121,23 @@ def _vote(values: list[tuple[object, Claim]]) -> tuple[object, Counter]:
     return winner, counts
 
 
+def _looks_like_keying_error(a: str, b: str) -> str | None:
+    """Describe how two canonical MRNs differ if it looks like a typo, else None.
+
+    Accepts one adjacent-digit transposition or up to two substituted digits,
+    the two most common manual keying errors.
+    """
+    da, db = a.removeprefix("MRN-"), b.removeprefix("MRN-")
+    if len(da) != len(db) or da == db:
+        return None
+    diffs = [i for i, (x, y) in enumerate(zip(da, db)) if x != y]
+    if len(diffs) == 2 and diffs[1] == diffs[0] + 1 and da[diffs[0]] == db[diffs[1]] and da[diffs[1]] == db[diffs[0]]:
+        return "an adjacent-digit transposition"
+    if len(diffs) <= 2:
+        return f"{len(diffs)} substituted digit{'s' if len(diffs) > 1 else ''}"
+    return None
+
+
 def _is_day_month_swap(a: date, b: date) -> bool:
     return a.year == b.year and a.month == b.day and a.day == b.month and a != b
 
@@ -170,13 +187,25 @@ class IdentityResolver:
                 continue
             primary, *others = sorted(mrns, key=group_rank)
             for o in others:
-                merged_into[o] = primary
-                self.dataset_audit.append(AuditEntry(
-                    record_id=f"Patient/{mrn_to_patient_id(primary)}", field="mrn", action="merged",
-                    before=o, after=primary,
-                    reason=(f"{o} (only in {sorted({c.raw.source_format for c in by_mrn[o]})}) has identical name and "
-                            f"birth date to {primary}; treated as an identifier error and merged"),
-                ))
+                sources = sorted({c.raw.source_format for c in by_mrn[o]})
+                typo = _looks_like_keying_error(primary, o)
+                if "json" not in sources and typo:
+                    merged_into[o] = primary
+                    self.dataset_audit.append(AuditEntry(
+                        record_id=f"Patient/{mrn_to_patient_id(primary)}", field="mrn", action="merged",
+                        before=o, after=primary,
+                        reason=(f"{o} (only in {sources}) has identical name and birth date to {primary} and "
+                                f"differs by {typo}; treated as an identifier error and merged"),
+                    ))
+                else:
+                    # Same name + DOB is not proof of identity (namesakes, twins with shared names, two real
+                    # registrations). A wrong merge mixes two people's charts, so we flag for human review instead.
+                    why = ("both MRNs are registered in the EHR export" if "json" in sources
+                           else "MRNs differ by more than a typical keying error")
+                    self.issues.append(DatasetIssue(
+                        severity="warning", record_id=f"Patient/{mrn_to_patient_id(o)}",
+                        message=f"possible duplicate of {primary} (same name and birth date) not merged: {why}",
+                    ))
 
         # 3. Orphans (no usable MRN) attach by name + DOB if possible.
         key_to_mrn = {group_key[m]: m for m in by_mrn if group_key[m] and m not in merged_into}
