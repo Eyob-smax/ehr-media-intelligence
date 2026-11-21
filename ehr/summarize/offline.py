@@ -47,7 +47,8 @@ def _diagnoses(items: list[SourceItem]) -> list[CitedItem]:
 def _chief_concern(ctx: PatientContext) -> str:
     encs = [i for i in ctx.items if i.kind == "encounter"]
     if encs:
-        return max(encs, key=lambda e: e.date).text
+        # Dated encounters always beat undated ones ("unknown" would otherwise sort after every ISO date).
+        return max(encs, key=lambda e: (e.date != "unknown", e.date)).text
     for it in ctx.items:
         if m := re.search(r"(chief complaint|reason for visit):\s*(.+)", it.text, re.IGNORECASE):
             return m.group(2).rstrip(".")
