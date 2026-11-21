@@ -75,7 +75,11 @@ class ClaudeSummarizer:
             raise SummarizerError(f"API error {e.status_code}: {e.message}") from e
         except anthropic.APIConnectionError as e:
             raise SummarizerError("could not reach the Anthropic API") from e
-        except TypeError as e:  # SDK raises this when no credentials can be resolved at all
+        except TypeError as e:
+            # The SDK raises TypeError("Could not resolve authentication method ...") when no credentials exist.
+            # Any other TypeError is a programming error and must surface, not be disguised as missing credentials.
+            if "authentication" not in str(e).lower():
+                raise
             raise SummarizerError(f"no Anthropic credentials: {e}", permanent=True) from e
 
         if resp.stop_reason == "refusal":

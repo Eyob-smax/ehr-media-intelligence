@@ -173,6 +173,17 @@ def test_refusal_and_bad_json_raise_summarizer_error(store, chf_patient):
         ClaudeSummarizer("m", client=client).summarize(ctx)
 
 
+def test_missing_credentials_is_permanent_but_other_type_errors_surface(store, chf_patient):
+    ctx = _ctx(store, chf_patient)
+    client, _ = fake_client(TypeError("Could not resolve authentication method. Expected one of api_key"))
+    with pytest.raises(SummarizerError) as exc:
+        ClaudeSummarizer("m", client=client).summarize(ctx)
+    assert exc.value.permanent
+    client, _ = fake_client(TypeError("create() got an unexpected keyword argument 'fallbacks'"))
+    with pytest.raises(TypeError, match="unexpected keyword"):
+        ClaudeSummarizer("m", client=client).summarize(ctx)
+
+
 def test_auth_failure_falls_back_to_offline_and_stops_calling_the_api(store):
     req = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
     auth_error = anthropic.AuthenticationError("invalid x-api-key", response=httpx2.Response(401, request=req),
