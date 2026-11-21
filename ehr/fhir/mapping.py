@@ -209,6 +209,13 @@ def observation_resource(d: ClinicalDocument, o: LabObservation, idx: int, patie
     return res
 
 
+def _abnormal_phrase(o: LabObservation) -> str:
+    direction = "high" if o.flag == "H" else "low"
+    if o.value is None:  # flagged by the source but the value itself was not reported
+        return f"{o.test} flagged {direction} (value not reported)"
+    return f"{o.test} {o.value:g} {o.unit or ''}".rstrip() + f" ({direction})"
+
+
 def diagnostic_report(d: ClinicalDocument, patient: dict, encounter: dict | None,
                       results: list[dict]) -> dict[str, Any]:
     is_lab = d.kind is DocKind.lab_report
@@ -217,9 +224,8 @@ def diagnostic_report(d: ClinicalDocument, patient: dict, encounter: dict | None
         code_tuple = PANEL_LOINC.get(panel)
         category = {"system": V2_0074, "code": "LAB", "display": "Laboratory"}
         abnormal = [o for o in d.observations if o.is_abnormal]
-        conclusion = ("Abnormal: " + "; ".join(
-            f"{o.test} {o.value:g} {o.unit or ''} ({'high' if o.flag == 'H' else 'low'})".replace("  ", " ")
-            for o in abnormal)) if abnormal else "All reported results within reference range."
+        conclusion = ("Abnormal: " + "; ".join(_abnormal_phrase(o) for o in abnormal)
+                      if abnormal else "All reported results within reference range.")
     else:
         code_tuple = IMAGING_LOINC
         category = {"system": V2_0074, "code": "RAD", "display": "Radiology"}

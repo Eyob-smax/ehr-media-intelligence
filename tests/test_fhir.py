@@ -77,6 +77,25 @@ def test_validator_reports_structure_terminology_and_reference_errors(sample_bun
     assert "bogus" in md and "dangling reference" in md
 
 
+def test_flagged_lab_without_value_maps_and_validates(tmp_path):
+    """Regression: a source flag with a blank value used to crash the conclusion formatter."""
+    from ehr.ingest.pipeline import run_ingestion
+
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    (raw / "labs.csv").write_text(
+        "mrn,patient_name,dob,collected,panel,test,value,unit,ref_range,flag\n"
+        "42,\"Doe, Jane\",1970-05-06,2025-03-01 09:00,BMP,Potassium,,mmol/L,3.5-5.1,H\n"
+    )
+    ds = run_ingestion(raw)
+    bundle = next(iter(build_bundles(ds).values()))
+    dr = _by_type(bundle, "DiagnosticReport")[0]
+    assert dr["conclusion"] == "Abnormal: Potassium flagged high (value not reported)"
+    obs = _by_type(bundle, "Observation")[0]
+    assert "dataAbsentReason" in obs and "valueQuantity" not in obs
+    assert validate_bundle(bundle).valid
+
+
 def test_store_roundtrip_and_resource_index(tmp_path, sample_bundles):
     store = BundleStore(tmp_path / "ehr.sqlite3")
     pid, bundle = next(iter(sample_bundles.items()))
