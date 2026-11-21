@@ -1,7 +1,8 @@
 """Command-line entry point.
 
-    python -m ehr.cli build      # ingest -> FHIR -> validate -> store (-> summarize -> index)
+    python -m ehr.cli build      # ingest -> FHIR -> validate -> store -> summarize -> index
     python -m ehr.cli ingest     # Task 1 only, writes clean dataset + audit log
+    python -m ehr.cli serve      # API + UI on http://127.0.0.1:8000
 """
 
 from __future__ import annotations
@@ -81,22 +82,50 @@ def cmd_summarize(s: Settings, store: BundleStore, force: bool) -> SummaryServic
     return svc
 
 
+def cmd_index(s: Settings, store: BundleStore, svc: SummaryService) -> None:
+    from .search.embeddings import get_embedder
+    from .search.index import SearchIndex
+
+    embedder = get_embedder(s)
+    with _step(f"Task 4 · embed and index ({embedder.name})"):
+        index = SearchIndex(s.chroma_dir, embedder)
+        summaries = {p["patient_id"]: svc.latest(p["patient_id"]) for p in store.list_patients()}
+        n = index.rebuild(store.iter_bundles(), {k: v for k, v in summaries.items() if v})
+        r = index.search("chest x-ray findings")
+        print(f"  {n} chunks indexed · sample query returned {len(r.hits)} hits in {r.took_ms:.0f} ms")
+
+
+def cmd_serve(host: str, port: int) -> None:
+    import uvicorn
+
+    print(f"Serving UI and API on http://{host}:{port}  (API docs at /docs)")
+    uvicorn.run("ehr.api:create_app", factory=True, host=host, port=port)
+
+
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="ehr", description="EHR Media Intelligence pipeline")
-    ap.add_argument("command", choices=["ingest", "build"])
+    ap.add_argument("command", choices=["ingest", "build", "serve"])
+    ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--port", type=int, default=8000)
     ap.add_argument("--reference-date", type=date.fromisoformat, default=None,
                     help="'today' for date sanity checks (defaults to the real current date)")
     ap.add_argument("--force-summaries", action="store_true", help="ignore the summary cache and regenerate")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    for noisy in ("httpx", "httpx2", "huggingface_hub", "sentence_transformers", "chromadb"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
 
     s = get_settings()
+    if args.command == "serve":
+        cmd_serve(args.host, args.port)
+        return
     s.out_dir.mkdir(parents=True, exist_ok=True)
     ds = cmd_ingest(s, args.reference_date)
     if args.command == "ingest":
         return
     store = cmd_fhir(s, ds)
-    cmd_summarize(s, store, args.force_summaries)
+    svc = cmd_summarize(s, store, args.force_summaries)
+    cmd_index(s, store, svc)
 
 
 if __name__ == "__main__":
