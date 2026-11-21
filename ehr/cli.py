@@ -88,7 +88,7 @@ def cmd_index(s: Settings, store: BundleStore, svc: SummaryService) -> None:
 
     embedder = get_embedder(s)
     with _step(f"Task 4 · embed and index ({embedder.name})"):
-        index = SearchIndex(s.chroma_dir, embedder)
+        index = SearchIndex(s.chroma_dir, embedder, mrn_resolver=store.patient_for_mrn)
         summaries = {p["patient_id"]: svc.latest(p["patient_id"]) for p in store.list_patients()}
         n = index.rebuild(store.iter_bundles(), {k: v for k, v in summaries.items() if v})
         r = index.search("chest x-ray findings")

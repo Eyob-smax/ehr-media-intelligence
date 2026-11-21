@@ -26,7 +26,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import chromadb
 from chromadb.config import Settings as ChromaSettings
@@ -86,8 +86,10 @@ class SearchResponse:
 
 
 class SearchIndex:
-    def __init__(self, chroma_dir: Path, embedder: Embedder, collection: str = "ehr_records"):
+    def __init__(self, chroma_dir: Path, embedder: Embedder, collection: str = "ehr_records",
+                 mrn_resolver: Callable[[str], str | None] | None = None):
         self.embedder = embedder
+        self.mrn_resolver = mrn_resolver
         Path(chroma_dir).mkdir(parents=True, exist_ok=True)
         self.client = chromadb.PersistentClient(path=str(chroma_dir),
                                                 settings=ChromaSettings(anonymized_telemetry=False))
@@ -150,18 +152,29 @@ class SearchIndex:
         clauses: list[dict] = []
         if resource_types:
             clauses.append({"resource_type": {"$in": list(resource_types)}})
+        if date_from or date_to:
+            clauses.append({"date_int": {"$gt": 0}})  # undated records can't satisfy a date range
         if date_from:
             clauses.append({"date_int": {"$gte": _date_int(date_from.isoformat())}})
         if date_to:
             clauses.append({"date_int": {"$lte": _date_int(date_to.isoformat())}})
-        mrn = self._mrn_from_query(query)
-        if mrn:
-            clauses.append({"mrn": mrn})
+        mrn, explicit = self._mrn_from_query(query)
+        patient_id = self._resolve_mrn(mrn) if mrn else None
+        filters = {"resource_types": resource_types or [], "date_from": date_from and date_from.isoformat(),
+                   "date_to": date_to and date_to.isoformat(), "mrn": mrn if patient_id else None}
+        if patient_id:
+            clauses.append({"patient_id": patient_id})
+        elif explicit:
+            # The user asked for a specific MRN ("MRN 1234") that doesn't exist: say so rather than guess.
+            return SearchResponse([], round((time.perf_counter() - t0) * 1000, 1), 0,
+                                  {**filters, "mrn": mrn, "mrn_not_found": True})
+        else:
+            mrn = None  # a bare number that isn't a known MRN (e.g. "2025") is just a search term
         where = None if not clauses else clauses[0] if len(clauses) == 1 else {"$and": clauses}
 
         total = self.col.count()
         if total == 0:
-            return SearchResponse([], (time.perf_counter() - t0) * 1000, 0)
+            return SearchResponse([], (time.perf_counter() - t0) * 1000, 0, filters)
         n = min(total, max(top_k * 8, 40))
         embed_text, groups = expand(query)
         res = self.col.query(query_embeddings=self.embedder.embed([embed_text]), n_results=n, where=where,
@@ -186,21 +199,29 @@ class SearchIndex:
                 category=meta["category"], date=meta["date"] or None, snippet=_snippet(doc, q_terms),
             )
         hits = sorted(best.values(), key=lambda h: h.score, reverse=True)[:top_k]
-        filters = {"resource_types": resource_types or [], "date_from": date_from and date_from.isoformat(),
-                   "date_to": date_to and date_to.isoformat(), "mrn": mrn}
         return SearchResponse(hits, round((time.perf_counter() - t0) * 1000, 1), len(res["ids"][0]), filters)
 
     @staticmethod
-    def _mrn_from_query(query: str) -> str | None:
-        """Only treat a number as an MRN when the user says so ("MRN 1234") or the query is just the number."""
+    def _mrn_from_query(query: str) -> tuple[str | None, bool]:
+        """Return (candidate MRN, explicit?). Explicit means the user wrote "MRN ..."; a bare number is only a candidate."""
         q = query.strip()
-        m = _MRN_IN_QUERY.fullmatch(q) or re.search(r"\bmrn[\s:#-]*(\d{1,7})\b", q, re.IGNORECASE)
-        if not m:
-            return None
+        if m := re.search(r"\bmrn[\s:#-]*(\d{1,7})\b", q, re.IGNORECASE):
+            explicit = True
+        elif m := _MRN_IN_QUERY.fullmatch(q):
+            explicit = False
+        else:
+            return None, False
         try:
-            return normalize_mrn(m.group(1))
+            return normalize_mrn(m.group(1)), explicit
         except ValueError:
-            return None
+            return None, False
+
+    def _resolve_mrn(self, mrn: str) -> str | None:
+        """Map an MRN (official or merged/old) to a patient id via the injected resolver, else the index metadata."""
+        if self.mrn_resolver is not None:
+            return self.mrn_resolver(mrn)
+        got = self.col.get(where={"mrn": mrn}, limit=1, include=["metadatas"])
+        return got["metadatas"][0]["patient_id"] if got["metadatas"] else None
 
 
 def _snippet(doc: str, q_terms: set[str], width: int = 260) -> str:

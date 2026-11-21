@@ -95,7 +95,7 @@ class AppState:
         self.store = BundleStore(settings.db_path)
         self.summaries = SummaryService(self.store, SummaryCache(settings.db_path), make_summarizer(settings))
         self.embedder = embedder or get_embedder(settings)
-        self.index = SearchIndex(settings.chroma_dir, self.embedder)
+        self.index = SearchIndex(settings.chroma_dir, self.embedder, mrn_resolver=self.store.patient_for_mrn)
         self._snippets: dict[str, str] = {}
 
     def warm_up(self) -> None:

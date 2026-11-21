@@ -39,7 +39,7 @@ def built(tmp_path_factory, sample_bundles):
 @pytest.fixture(scope="module")
 def index(built):
     settings, store, summaries = built
-    idx = SearchIndex(settings.chroma_dir, HashEmbedder())
+    idx = SearchIndex(settings.chroma_dir, HashEmbedder(), mrn_resolver=store.patient_for_mrn)
     idx.rebuild(store.iter_bundles(), summaries)
     return idx
 
@@ -96,6 +96,40 @@ def test_mrn_query_filters_to_that_patient(index, sample_dataset):
     number = p.mrn.removeprefix("MRN-").lstrip("0")
     hits = index.search(f"MRN {number}", top_k=10).hits
     assert hits and {h.patient_id for h in hits} == {p.patient_id}
+
+
+def test_merged_old_mrn_finds_the_patient(index, sample_dataset):
+    p = next(p for p in sample_dataset.patients if p.alternate_mrns)
+    hits = index.search(p.alternate_mrns[0]).hits
+    assert hits and {h.patient_id for h in hits} == {p.patient_id}
+
+
+def test_bare_number_that_is_not_an_mrn_is_a_normal_search_term(index):
+    r = index.search("2025")
+    assert r.hits, "a year must not be silently turned into an MRN filter"
+    assert r.filters["mrn"] is None
+
+
+def test_explicit_unknown_mrn_returns_nothing_and_says_why(index):
+    r = index.search("MRN 9999999")
+    assert r.hits == [] and r.filters["mrn_not_found"] is True
+
+
+def test_date_filters_exclude_undated_records(tmp_path, sample_bundles):
+    import copy
+
+    pid, bundle = next(iter(sample_bundles.items()))
+    bundle = copy.deepcopy(bundle)
+    doc = next(e["resource"] for e in bundle["entry"] if e["resource"]["resourceType"] == "DocumentReference")
+    doc.pop("date", None)
+    doc.get("context", {}).pop("period", None)
+    doc["content"][0]["attachment"].pop("creation", None)
+    idx = SearchIndex(tmp_path / "c", HashEmbedder())
+    idx.rebuild([(pid, bundle)])
+    undated = idx.search(doc["description"], top_k=20).hits
+    assert any(h.date is None for h in undated)
+    filtered = idx.search(doc["description"], date_to=date(2030, 1, 1), top_k=20).hits
+    assert filtered and all(h.date for h in filtered)
 
 
 def test_search_latency_under_two_seconds_for_50_plus_records(index, built):
@@ -162,6 +196,15 @@ def test_patient_detail_has_summary_disclaimer_and_linked_resources(client, samp
     rid = d["resources"][0]["resource_id"]
     assert client.get(f"/resources/{rid}").json()["id"] == rid
     assert client.get(f"/patients/{pid}/bundle").json()["resourceType"] == "Bundle"
+
+
+def test_every_search_hit_resolves_including_summary_hits(client):
+    res = client.post("/search?resource_type=Patient&resource_type=DiagnosticReport",
+                      json={"query": "heart failure", "top_k": 10}).json()["results"]
+    assert {r["resource_type"] for r in res} == {"Patient", "DiagnosticReport"}
+    for r in res:
+        got = client.get(f"/resources/{r['resource_id']}")
+        assert got.status_code == 200 and got.json()["resourceType"] == r["resource_type"]
 
 
 def test_unknown_ids_return_404(client):
