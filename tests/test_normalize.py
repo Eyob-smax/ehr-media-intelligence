@@ -110,6 +110,20 @@ def test_fingerprint_ignores_whitespace_and_case():
     assert fingerprint("chest pain") != fingerprint("chest pains")
 
 
+@pytest.mark.parametrize("title, kind", [
+    ("Outside Radiology Report", "imaging_report"),
+    ("CT Head without Contrast", "imaging_report"),
+    ("Direct Admission Note", "scanned_document"),
+    ("Conflict of Interest Form", "scanned_document"),
+    ("Discharge Summary", "discharge_summary"),
+    ("Office Visit Note", "progress_note"),
+])
+def test_scanned_title_classification_matches_whole_words(title, kind):
+    from ehr.ingest.loaders import _kind_from_title
+
+    assert _kind_from_title(title).value == kind
+
+
 def test_lab_flag_is_derived_when_missing_and_corrected_when_wrong():
     assert derive_flag(132, "135-145", "")[0] == "L"
     flag, note = derive_flag(4.2, "3.5-5.1", "H")

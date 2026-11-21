@@ -219,13 +219,16 @@ _HDR_TYPE = re.compile(r"DOCUMENT TYPE:\s*(?P<type>.+?)\s*$", re.MULTILINE)
 _HDR_RULE = re.compile(r"^-{10,}\s*$", re.MULTILINE)
 
 
+_IMAGING_TITLE = re.compile(r"\b(radiology|imaging|x-?ray|xr|ct|mri|ultrasound|us|sonogram|mammogram)\b")
+
+
 def _kind_from_title(title: str) -> DocKind:
     t = title.lower()
-    if "discharge" in t:
+    if re.search(r"\bdischarge\b", t):
         return DocKind.discharge_summary
-    if any(w in t for w in ("radiology", "imaging", "x-ray", "xr ", "ct ", "mri", "ultrasound")):
+    if _IMAGING_TITLE.search(t):  # whole words only: "Direct Admission" must not match "ct"
         return DocKind.imaging_report
-    if "progress" in t or "office" in t:
+    if re.search(r"\b(progress|office visit)\b", t):
         return DocKind.progress_note
     return DocKind.scanned_document
 
