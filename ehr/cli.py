@@ -58,6 +58,8 @@ def cmd_fhir(s: Settings, ds) -> BundleStore:
         for r in results:
             store.save(r.patient_id, bundles[r.patient_id], valid=r.valid,
                        issues=[i.as_dict() for i in r.issues])
+        if removed := store.prune(set(bundles)):
+            print(f"  removed {removed} stale patient(s) no longer in the dataset (e.g. merged away)")
         print(f"  {report['valid_bundles']}/{report['bundles']} bundles valid · "
               f"{report['total_errors']} errors · {report['total_warnings']} warnings · "
               f"resources {report['resource_totals']}")
@@ -77,7 +79,7 @@ def cmd_summarize(s: Settings, store: BundleStore, force: bool) -> SummaryServic
         levels = {lvl: sum(sm.confidence.level == lvl for sm in summaries) for lvl in ("high", "medium", "low")}
         print(f"  {len(summaries)} summaries · generated {svc.stats['generated']} · cache hits "
               f"{svc.stats['cache_hits']} · fallbacks {svc.stats['fallbacks']}")
-        print(f"  confidence {levels} · max {max(sm.word_count for sm in summaries)} words · "
+        print(f"  confidence {levels} · max {max((sm.word_count for sm in summaries), default=0)} words · "
               f"{sum(bool(sm.quality_issues) for sm in summaries)} with quality issues")
     return svc
 

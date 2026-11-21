@@ -187,6 +187,33 @@ def test_auth_failure_falls_back_to_offline_and_stops_calling_the_api(store):
     assert svc.stats["fallbacks"] == 1
 
 
+def test_offline_chief_concern_prefers_dated_encounters(store, chf_patient):
+    from ehr.summarize.context import SourceItem
+    from ehr.summarize.offline import _chief_concern
+
+    ctx = _ctx(store, chf_patient)
+    ctx.items.append(SourceItem(sid="E99", kind="encounter", date="unknown", title="x", text="Undated old visit",
+                                resource_type="Encounter", resource_id="e99"))
+    assert _chief_concern(ctx) == "Shortness of breath and bilateral leg swelling"
+
+
+def test_store_prune_removes_patients_missing_from_new_run(store):
+    keep = {p["patient_id"] for p in store.list_patients()[:3]}
+    assert store.prune(keep) == 13
+    assert {p["patient_id"] for p in store.list_patients()} == keep
+    assert all(store.patient_for_mrn(p["mrn"]) for p in store.list_patients())
+
+
+def test_build_survives_an_empty_dataset(tmp_path, monkeypatch):
+    from ehr import cli
+
+    (tmp_path / "raw").mkdir()
+    for k, v in {"EHR_RAW_DIR": tmp_path / "raw", "EHR_OUT_DIR": tmp_path / "out",
+                 "EHR_DB_PATH": tmp_path / "db.sqlite3", "EHR_CHROMA_DIR": tmp_path / "chroma"}.items():
+        monkeypatch.setenv(k, str(v))
+    cli.main(["build"])
+
+
 def test_grounding_check_catches_hallucinated_numbers_and_bad_citations(store, chf_patient):
     ctx = _ctx(store, chf_patient)
     content = _grounded_content(ctx)
