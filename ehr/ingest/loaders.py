@@ -8,6 +8,7 @@ resolution happens in the pipeline so every source is treated the same way.
 from __future__ import annotations
 
 import csv
+import io
 import json
 import re
 from dataclasses import dataclass, field
@@ -146,6 +147,35 @@ def load_json_export(path: Path) -> LoadResult:
 # ---------------------------------------------------------------------------
 
 
+_CANONICAL_CSV = ["mrn", "patient_name", "dob", "collected", "panel", "test", "value", "unit", "ref_range", "flag"]
+_CSV_HEADER_ALIASES = {
+    "patient id": "mrn", "patientid": "mrn", "medical record number": "mrn", "mrn": "mrn",
+    "patient name": "patient_name", "name": "patient_name", "patient_name": "patient_name",
+    "birth date": "dob", "birthdate": "dob", "date of birth": "dob", "dob": "dob",
+    "result date": "collected", "resultdatetime": "collected", "result datetime": "collected",
+    "collection date": "collected", "collected": "collected", "specimen date": "collected",
+    "order name": "panel", "ordername": "panel", "panel": "panel", "battery": "panel",
+    "analyte": "test", "test name": "test", "testname": "test", "component": "test", "test": "test",
+    "result": "value", "result value": "value", "value": "value",
+    "units": "unit", "unit": "unit", "uom": "unit",
+    "reference range": "ref_range", "refrange": "ref_range", "ref range": "ref_range", "ref_range": "ref_range",
+    "abn flag": "flag", "abnflag": "flag", "abnormal flag": "flag", "flag": "flag",
+}
+
+
+def _hkey(h: str) -> str:
+    return " ".join(h.strip().lstrip("\ufeff").lower().replace("_", " ").split()) if h else ""
+
+
+def _read_text(path: Path) -> tuple[str, str]:
+    """Decode as UTF-8 (with or without BOM); fall back to Latin-1, which never fails, for legacy exports."""
+    raw = path.read_bytes()
+    try:
+        return raw.decode("utf-8-sig"), "utf-8"
+    except UnicodeDecodeError:
+        return raw.decode("latin-1"), "latin-1"
+
+
 def load_lab_csv(path: Path) -> LoadResult:
     """Group analyte rows into one lab report per (patient, collection time, panel).
 
@@ -156,43 +186,67 @@ def load_lab_csv(path: Path) -> LoadResult:
     out = LoadResult()
     src = path.name
     groups: dict[tuple, dict[str, Any]] = {}
-    with path.open(newline="") as fh:
-        for line_no, row in enumerate(csv.DictReader(fh), start=2):
-            rid = f"{src}:{line_no}"
-            row = {k: (v or "").strip() for k, v in row.items()}
-            try:
-                mrn_key = normalize_mrn(row.get("mrn"))
-            except ValueError:
-                mrn_key = row.get("mrn") or f"unknown:{line_no}"
-            try:
-                collected = parse_datetime(row.get("collected")).value
-                day_key = collected.date().isoformat()
-            except ValueError:
-                collected, day_key = None, row.get("collected", "")
-            key = (mrn_key, day_key, row.get("panel", "").upper())
-            g = groups.setdefault(key, {
-                "rows": {}, "first_line": line_no, "ident": RawIdentity(
-                    source_format="csv", record_id=rid, mrn=row.get("mrn"),
-                    name=row.get("patient_name") or None, dob=row.get("dob") or None),
-                "collected_raw": row.get("collected"), "collected": collected, "panel": row.get("panel"),
-            })
-            # Prefer the most precise timestamp seen for this group (some rows only carry a date).
-            if collected and (g["collected"] is None or (collected.time() != collected.min.time() and g["collected"].time() == collected.min.time())):
-                g["collected"], g["collected_raw"] = collected, row.get("collected")
-            if not g["ident"].name and row.get("patient_name"):
-                g["ident"].name = row["patient_name"]
-            test = row.get("test", "")
-            existing = g["rows"].get(test)
-            if existing is not None:
-                if existing.get("value") or not row.get("value"):
-                    out.audit.append(AuditEntry(record_id=rid, field="row", action="deduplicated",
-                                                before=f"{test}={row.get('value')}", reason=f"repeat of {test} in same report",
-                                                source=src))
-                    continue
-                out.audit.append(AuditEntry(record_id=rid, field="value", action="filled", before="",
-                                            after=row.get("value"), reason=f"empty {test} value replaced by later row",
+    text, encoding = _read_text(path)
+    if encoding != "utf-8":
+        out.audit.append(AuditEntry(record_id=src, field="encoding", action="normalized", before=encoding,
+                                    after="utf-8", reason="file was not UTF-8; decoded as " + encoding, source=src))
+    # The header line has no quoted commas or decimal commas, so the most frequent candidate there is the delimiter.
+    # (csv.Sniffer gives up on files mixing ';' delimiters with decimal commas.)
+    first_line = text.split("\n", 1)[0]
+    delimiter = max(",;\t|", key=first_line.count)
+    reader = csv.reader(io.StringIO(text), delimiter=delimiter)
+    header = [_CSV_HEADER_ALIASES.get(_hkey(h), _hkey(h)) for h in next(reader, [])]
+    missing = {"mrn", "test"} - set(header)
+    if missing:
+        out.audit.append(AuditEntry(record_id=src, field="header", action="dropped",
+                                    reason=f"unrecognized lab CSV layout (missing {sorted(missing)})", source=src))
+        return out
+    if header != _CANONICAL_CSV:
+        out.audit.append(AuditEntry(record_id=src, field="header", action="normalized", after=header,
+                                    reason="vendor column names mapped to canonical lab schema", source=src))
+    for line_no, cells in enumerate(reader, start=2):
+        rid = f"{src}:{line_no}"
+        if not any(c.strip() for c in cells):
+            continue
+        if len(cells) != len(header):
+            out.audit.append(AuditEntry(record_id=rid, field="row", action="dropped",
+                                        before="|".join(cells)[:80],
+                                        reason=f"expected {len(header)} columns, found {len(cells)}", source=src))
+            continue
+        row = {k: (v or "").strip() for k, v in zip(header, cells)}
+        try:
+            mrn_key = normalize_mrn(row.get("mrn"))
+        except ValueError:
+            mrn_key = row.get("mrn") or f"unknown:{line_no}"
+        try:
+            collected = parse_datetime(row.get("collected")).value
+            day_key = collected.date().isoformat()
+        except ValueError:
+            collected, day_key = None, row.get("collected", "")
+        key = (mrn_key, day_key, row.get("panel", "").upper())
+        g = groups.setdefault(key, {
+            "rows": {}, "first_line": line_no, "ident": RawIdentity(
+                source_format="csv", record_id=rid, mrn=row.get("mrn"),
+                name=row.get("patient_name") or None, dob=row.get("dob") or None),
+            "collected_raw": row.get("collected"), "collected": collected, "panel": row.get("panel"),
+        })
+        # Prefer the most precise timestamp seen for this group (some rows only carry a date).
+        if collected and (g["collected"] is None or (collected.time() != collected.min.time() and g["collected"].time() == collected.min.time())):
+            g["collected"], g["collected_raw"] = collected, row.get("collected")
+        if not g["ident"].name and row.get("patient_name"):
+            g["ident"].name = row["patient_name"]
+        test = row.get("test", "")
+        existing = g["rows"].get(test)
+        if existing is not None:
+            if existing.get("value") or not row.get("value"):
+                out.audit.append(AuditEntry(record_id=rid, field="row", action="deduplicated",
+                                            before=f"{test}={row.get('value')}", reason=f"repeat of {test} in same report",
                                             source=src))
-            g["rows"][test] = row
+                continue
+            out.audit.append(AuditEntry(record_id=rid, field="value", action="filled", before="",
+                                        after=row.get("value"), reason=f"empty {test} value replaced by later row",
+                                        source=src))
+        g["rows"][test] = row
 
     for (mrn_key, day_key, panel_key), g in groups.items():
         rows = list(g["rows"].values())
