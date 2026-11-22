@@ -104,7 +104,7 @@ def load_json_export(path: Path) -> LoadResult:
         p = rec.get("patient") or {}
         ident = RawIdentity(
             source_format="json", record_id=rid,
-            mrn=_first(p, "mrn", "MRN", "medical_record_number", "patient_id"),
+            mrn=_first(p, "mrn", "MRN", "medical_record_number", "patient_id", "patientIdentifier", "patient_identifier"),
             name=_first(p, "name", "full_name"),
             given=_first(p, "first_name", "given_name", "given"),
             family=_first(p, "last_name", "family_name", "family", "surname"),
@@ -147,7 +147,6 @@ def load_json_export(path: Path) -> LoadResult:
 # ---------------------------------------------------------------------------
 
 
-_CANONICAL_CSV = ["mrn", "patient_name", "dob", "collected", "panel", "test", "value", "unit", "ref_range", "flag"]
 _CSV_HEADER_ALIASES = {
     "patient id": "mrn", "patientid": "mrn", "medical record number": "mrn", "mrn": "mrn",
     "patient name": "patient_name", "name": "patient_name", "patient_name": "patient_name",
@@ -195,14 +194,15 @@ def load_lab_csv(path: Path) -> LoadResult:
     first_line = text.split("\n", 1)[0]
     delimiter = max(",;\t|", key=first_line.count)
     reader = csv.reader(io.StringIO(text), delimiter=delimiter)
-    header = [_CSV_HEADER_ALIASES.get(_hkey(h), _hkey(h)) for h in next(reader, [])]
+    raw_header = [_hkey(h) for h in next(reader, [])]
+    header = [_CSV_HEADER_ALIASES.get(h, h) for h in raw_header]
     missing = {"mrn", "test"} - set(header)
     if missing:
         out.audit.append(AuditEntry(record_id=src, field="header", action="dropped",
                                     reason=f"unrecognized lab CSV layout (missing {sorted(missing)})", source=src))
         return out
-    if header != _CANONICAL_CSV:
-        out.audit.append(AuditEntry(record_id=src, field="header", action="normalized", after=header,
+    if [h.replace(" ", "_") for h in raw_header] != header:
+        out.audit.append(AuditEntry(record_id=src, field="header", action="normalized", before=raw_header, after=header,
                                     reason="vendor column names mapped to canonical lab schema", source=src))
     for line_no, cells in enumerate(reader, start=2):
         rid = f"{src}:{line_no}"
