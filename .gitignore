@@ -19,3 +19,6 @@ NYCEDC - Onye 2026 AI Full-stack Assessment.pdf
 .vscode/
 .idea/
 .DS_Store
+
+# Synthetic input data is generated (python scripts/generate_data.py, or automatically by `build`)
+data/raw/

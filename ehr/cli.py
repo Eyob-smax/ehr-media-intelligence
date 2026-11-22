@@ -37,6 +37,21 @@ def _step(name: str):
     return _Timer()
 
 
+def ensure_sample_data(s: Settings, patients: int) -> None:
+    """Generate the synthetic dataset when the raw directory is empty (first run)."""
+    import importlib.util
+    import sys
+
+    from .config import ROOT
+
+    with _step(f"No raw data found; generating synthetic dataset (16 curated + {patients} cohort patients)"):
+        spec = importlib.util.spec_from_file_location("generate_data", ROOT / "scripts" / "generate_data.py")
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = mod
+        spec.loader.exec_module(mod)
+        print("  " + json.dumps(mod.build(s.raw_dir, seed=7, cohort=patients)))
+
+
 def cmd_ingest(s: Settings, reference: date | None):
     with _step("Task 1 · ingest and clean"):
         ds = run_ingestion(s.raw_dir, reference=reference)
@@ -112,6 +127,8 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--reference-date", type=date.fromisoformat, default=None,
                     help="'today' for date sanity checks (defaults to the real current date)")
     ap.add_argument("--force-summaries", action="store_true", help="ignore the summary cache and regenerate")
+    ap.add_argument("--patients", type=int, default=300,
+                    help="cohort size when generating sample data on first run (data/raw empty)")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     for noisy in ("httpx", "httpx2", "huggingface_hub", "sentence_transformers", "chromadb"):
@@ -122,6 +139,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_serve(args.host, args.port)
         return
     s.out_dir.mkdir(parents=True, exist_ok=True)
+    if not s.raw_dir.exists() or not any(s.raw_dir.iterdir()):
+        ensure_sample_data(s, args.patients)
     ds = cmd_ingest(s, args.reference_date)
     if args.command == "ingest":
         return
