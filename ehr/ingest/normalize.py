@@ -210,11 +210,26 @@ def smart_title(s: str) -> str:
     return " ".join(out)
 
 
+_SUFFIX = re.compile(r"[\s,]+(jr|sr|ii|iii|iv)\.?(?=\s*(,|$))", re.IGNORECASE)
+
+
+def extract_suffix(raw: str | None) -> tuple[str | None, str | None]:
+    """Remove a generational suffix ("Jr.", "III") from a name string. Returns (name without suffix, suffix)."""
+    if not raw:
+        return raw, None
+    m = _SUFFIX.search(str(raw))
+    if not m:
+        return raw, None
+    token = m.group(1).lower()
+    suffix = token.upper() if token.startswith("i") else token.capitalize() + "."
+    return (str(raw)[: m.start()] + str(raw)[m.end():]).strip(" ,"), suffix
+
+
 def split_name(raw: str | None) -> tuple[str | None, str | None]:
-    """Split ``"DOE, JANE"`` or ``"Jane Doe"`` into ``(given, family)``."""
+    """Split ``"DOE, JANE"`` or ``"Jane Doe"`` into ``(given, family)``. Generational suffixes are dropped."""
     if not raw or not str(raw).strip():
         return None, None
-    s = " ".join(str(raw).split())
+    s = " ".join(str(extract_suffix(str(raw))[0]).split())
     if "," in s:
         family, given = (x.strip() for x in s.split(",", 1))
     else:

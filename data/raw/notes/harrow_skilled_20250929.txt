@@ -1,9 +1,0 @@
-PATIENT: Lucinda Harrow    MRN: mrn6227
-DOB: 08 Aug 1940    SEX: 2
-DATE OF SERVICE: 2025-09-29
-DOCUMENT TYPE: Skilled Nursing Facility Transfer Note
-----------------------------------------
-  Transferred to skilled nursing for rehabilitation after urosepsis. 
-Baseline mild dementia. Ambulates with walker. Allergy: sulfa 
-drugs. Fall risk   high.
-

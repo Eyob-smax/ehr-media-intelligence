@@ -36,6 +36,7 @@ from .models import (
 )
 from .normalize import (
     clean_text,
+    extract_suffix,
     derive_flag,
     fingerprint,
     mrn_to_patient_id,
@@ -67,6 +68,7 @@ class Claim:
     family: str | None
     birth_date: date | None
     gender: Gender | None
+    suffix: str | None = None
     notes: list[tuple[str, str, object, object]] = field(default_factory=list)  # (field, note, before, after)
 
     @property
@@ -80,6 +82,7 @@ def _normalize_claim(raw: RawIdentity, reference: date, issues: list[DatasetIssu
         c.mrn = normalize_mrn(raw.mrn)
     except ValueError as e:
         issues.append(DatasetIssue(severity="warning", record_id=raw.record_id, message=str(e)))
+    c.suffix = extract_suffix(raw.family or raw.name)[1]
     if raw.given or raw.family:
         g, f = split_name(f"{raw.family or ''}, {raw.given or ''}")
         c.given, c.family = g, f
@@ -244,6 +247,11 @@ class IdentityResolver:
             if len(counts) > 1:
                 p.log("name", "conflict", before={f"{g} {f}": n for (g, f), n in counts.items()},
                       after=p.display_name, reason="sources disagree on name; majority vote")
+        suffixes = [(c.suffix, c) for c in claims if c.suffix]
+        if suffixes:
+            p.name_suffix, _ = _vote(suffixes)
+            p.log("name_suffix", "normalized", before=sorted({c.raw.family or c.raw.name for _, c in suffixes})[:3],
+                  after=p.name_suffix, reason="generational suffix separated from family name")
         missing_name = [c for c in claims if not (c.given and c.family)]
         if missing_name and p.given_name:
             p.log("name", "filled", before=None, after=p.display_name,

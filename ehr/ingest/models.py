@@ -93,6 +93,7 @@ class Patient(Audited):
     alternate_mrns: list[str] = Field(default_factory=list, description="Other MRNs merged into this identity")
     given_name: str | None = None
     family_name: str | None = None
+    name_suffix: str | None = None
     birth_date: date | None = None
     gender: Gender = Gender.unknown
 
@@ -101,7 +102,7 @@ class Patient(Audited):
 
     @property
     def display_name(self) -> str:
-        parts = [p for p in (self.given_name, self.family_name) if p]
+        parts = [p for p in (self.given_name, self.family_name, self.name_suffix) if p]
         return " ".join(parts) if parts else self.mrn
 
 

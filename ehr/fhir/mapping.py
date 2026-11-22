@@ -121,6 +121,8 @@ def patient_resource(p: Patient) -> dict[str, Any]:
             name["family"] = p.family_name
         if p.given_name:
             name["given"] = [p.given_name]
+        if p.name_suffix:
+            name["suffix"] = [p.name_suffix]
         res["name"] = [name]
     if p.birth_date:
         res["birthDate"] = p.birth_date.isoformat()

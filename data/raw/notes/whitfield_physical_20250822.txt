@@ -1,9 +1,0 @@
-PATIENT: Darnell Whitfield    MRN: 5135
-DOB: 4/28/76    SEX: Male
-DATE OF SERVICE: 22 Aug 2025
-DOCUMENT TYPE: Physical Therapy Evaluation
-----------------------------------------
-Physical therapy evaluation   for lumbar radiculopathy. Limited 
-lumbar flexion.   Pain 7/10. Plan for core stabilization twice weekly 
-for 6 weeks.
-
