@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from .labs import convert, find_panel, find_test, parse_lab_value
 from .loaders import SOURCE_RANK, LoadResult, RawIdentity, load_directory
 from .models import (
     AuditEntry,
@@ -42,7 +43,6 @@ from .normalize import (
     normalize_mrn,
     parse_date,
     parse_datetime,
-    parse_float,
     split_name,
 )
 
@@ -50,12 +50,6 @@ log = logging.getLogger(__name__)
 
 LAB_ENCOUNTER_WINDOW = timedelta(days=2)
 
-LOINC_BY_TEST = {
-    "hemoglobin": "718-7", "wbc": "6690-2", "platelets": "777-3",
-    "sodium": "2951-2", "potassium": "2823-3", "creatinine": "2160-0", "glucose": "2345-7",
-    "hemoglobin a1c": "4548-4", "ldl cholesterol": "13457-7", "hdl cholesterol": "2085-9",
-    "total cholesterol": "2093-3", "tsh": "3016-3", "bnp": "30934-4",
-}
 
 
 # ---------------------------------------------------------------------------
@@ -316,15 +310,58 @@ _CLASS_MAP = {
 }
 
 
+FLAG_WORDS = {"H": "high", "L": "low", "HH": "critical high", "LL": "critical low", "A": "abnormal"}
+
+
+def _clean_observation(o: dict, doc: ClinicalDocument, audit_id: str) -> LabObservation:
+    """Canonicalize one analyte: name/LOINC from the catalog, parse the value, convert units, derive the flag."""
+    raw_name = str(o.get("test") or "").strip()
+    test = find_test(raw_name)
+    name = test.name if test else raw_name
+    fld = f"observation:{name}"
+    if test and raw_name != test.name:
+        doc.log(fld, "normalized", before=raw_name, after=test.name, reason="test name alias mapped to catalog",
+                record_id=audit_id)
+
+    pv = parse_lab_value(o.get("value"))
+    value, unit, ref = pv.value, (o.get("unit") or "").strip() or None, (o.get("ref_range") or "").strip() or None
+    if pv.note:
+        doc.log(fld, "normalized" if value is not None else "missing", before=o.get("value"), after=value,
+                reason=pv.note, record_id=audit_id)
+    elif value is None:
+        doc.log(fld, "missing", before=o.get("value"), reason="lab value empty in source", record_id=audit_id)
+
+    if test and value is not None:
+        new_value, new_unit, note = convert(test, value, unit)
+        if note and new_unit == test.unit and (unit or "") != test.unit:
+            doc.log(fld, "normalized", before=f"{value:g} {unit}", after=f"{new_value:g} {new_unit}", reason=note,
+                    record_id=audit_id)
+            ref = test.ref_range or ref  # the source range was in the source unit
+        elif note:
+            doc.log(fld, "normalized", before=unit, reason=note, record_id=audit_id)
+        value, unit = new_value, new_unit
+    elif test and not unit:
+        unit = test.unit or None
+    if test and not ref and test.ref_range:
+        ref = test.ref_range
+        doc.log(fld, "filled", after=ref, reason="reference range missing; catalog default used", record_id=audit_id)
+
+    flag, note = derive_flag(value, ref, pv.flag_hint or o.get("flag"))
+    if note and value is not None:
+        doc.log(fld, "inferred", before=o.get("flag"), after=flag, reason=note, record_id=audit_id)
+    return LabObservation(test=name, value=value, comparator=pv.comparator, unit=unit or None,  # type: ignore[arg-type]
+                          ref_range=ref, flag=flag, loinc=test.loinc if test else None)  # type: ignore[arg-type]
+
+
 def _render_lab_text(title: str, when: datetime | None, obs: list[LabObservation]) -> str:
     lines = [title.upper(), f"Collected: {when:%Y-%m-%d %H:%M}" if when else "Collected: unknown"]
     for o in obs:
-        val = "not reported" if o.value is None else f"{o.value:g} {o.unit or ''}".strip()
-        flag = {"H": " [HIGH]", "L": " [LOW]"}.get(o.flag or "", "")
+        val = "not reported" if o.value is None else f"{o.comparator or ''}{o.value:g} {o.unit or ''}".strip()
+        flag = f" [{FLAG_WORDS[o.flag].upper()}]" if o.flag in FLAG_WORDS else ""
         ref = f" (ref {o.ref_range})" if o.ref_range else ""
         lines.append(f"{o.test}: {val}{ref}{flag}")
     abnormal = [o for o in obs if o.is_abnormal]
-    lines.append("Abnormal results: " + (", ".join(f"{o.test} {'high' if o.flag == 'H' else 'low'}" for o in abnormal)
+    lines.append("Abnormal results: " + (", ".join(f"{o.test} {FLAG_WORDS[o.flag]}" for o in abnormal)  # type: ignore[index]
                                          if abnormal else "none"))
     return "\n".join(lines)
 
@@ -414,19 +451,13 @@ def clean(loaded: LoadResult, *, reference: date | None = None) -> CleanDataset:
 
         # Lab observations.
         if rd.kind is DocKind.lab_report:
+            panel = find_panel(rd.title.removesuffix(" Results"))
+            if panel and f"{panel.name} Results" != doc.title:
+                doc.log("title", "normalized", before=doc.title, after=f"{panel.name} Results",
+                        reason="panel name mapped to catalog", record_id=audit_id)
+                doc.title = f"{panel.name} Results"
             for o in rd.observations:
-                value = parse_float(o.get("value"))
-                flag, note = derive_flag(value, o.get("ref_range"), o.get("flag"))
-                if value is None:
-                    doc.log(f"observation:{o['test']}", "missing", before=o.get("value"),
-                            reason="lab value empty in source", record_id=audit_id)
-                elif note:
-                    doc.log(f"observation:{o['test']}", "inferred", before=o.get("flag"), after=flag, reason=note,
-                            record_id=audit_id)
-                doc.observations.append(LabObservation(
-                    test=o["test"], value=value, unit=o.get("unit") or None, ref_range=o.get("ref_range") or None,
-                    flag=flag, loinc=LOINC_BY_TEST.get(o["test"].lower()),  # type: ignore[arg-type]
-                ))
+                doc.observations.append(_clean_observation(o, doc, audit_id))
             doc.text = _render_lab_text(doc.title, doc.date, doc.observations)
             # Labs arrive without an encounter; attach to the patient's nearest encounter within the window.
             if doc.date and not doc.encounter_id:

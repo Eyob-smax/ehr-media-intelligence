@@ -119,14 +119,20 @@ class Encounter(Audited):
 class LabObservation(BaseModel):
     test: str
     value: float | None = None
+    comparator: Literal["<", "<=", ">", ">="] | None = None
     unit: str | None = None
     ref_range: str | None = None
-    flag: Literal["H", "L", "N"] | None = None
+    # HL7 v2 table 0078 subset: H/L high/low, HH/LL critical, A abnormal (direction unknown), N normal
+    flag: Literal["H", "L", "HH", "LL", "A", "N"] | None = None
     loinc: str | None = None
 
     @property
     def is_abnormal(self) -> bool:
-        return self.flag in ("H", "L")
+        return self.flag in ("H", "L", "HH", "LL", "A")
+
+    @property
+    def is_critical(self) -> bool:
+        return self.flag in ("HH", "LL")
 
 
 class ClinicalDocument(Audited):

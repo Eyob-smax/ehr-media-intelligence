@@ -68,6 +68,8 @@ _RE_YMD_SLASH = re.compile(r"^(\d{4})/(\d{1,2})/(\d{1,2})$")
 _RE_SLASH = re.compile(r"^(\d{1,2})/(\d{1,2})/(\d{2}|\d{4})(?:\s+(\d{1,2}):(\d{2}))?$")
 _RE_TEXT_MDY = re.compile(r"^([A-Za-z]{3,9})\.?\s+(\d{1,2}),?\s+(\d{4})$")
 _RE_TEXT_DMY = re.compile(r"^(\d{1,2})[\s-]([A-Za-z]{3,9})\.?[\s-](\d{4})$")
+_RE_DOTTED_DMY = re.compile(r"^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$")  # European: 01.03.2025
+_RE_COMPACT = re.compile(r"^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2})?)?$")      # HL7-style: 20250301[1030[00]]
 
 
 def _month(name: str) -> int:
@@ -134,6 +136,12 @@ def parse_datetime(raw: object, *, reference: date | None = None, allow_future: 
         result = Parsed(datetime(int(m[3]), _month(m[1]), int(m[2])), None, False)
     elif m := _RE_TEXT_DMY.match(s):
         result = Parsed(datetime(int(m[3]), _month(m[2]), int(m[1])), None, False)
+    elif m := _RE_DOTTED_DMY.match(s):
+        result = Parsed(datetime(int(m[3]), int(m[2]), int(m[1]), int(m[4] or 0), int(m[5] or 0)),
+                        "dotted date read as day.month.year", m[4] is not None)
+    elif m := _RE_COMPACT.match(s):
+        result = Parsed(datetime(int(m[1]), int(m[2]), int(m[3]), int(m[4] or 0), int(m[5] or 0), int(m[6] or 0)),
+                        None, m[4] is not None)
     else:
         raise ValueError(f"unrecognized date format: {s!r}")
 
@@ -277,9 +285,9 @@ def parse_ref_range(ref: str | None) -> tuple[float | None, float | None]:
 
 def derive_flag(value: float | None, ref: str | None, given: str | None) -> tuple[str | None, str | None]:
     """Return (flag, note). Trusts the source flag but recomputes it from the range when they disagree."""
-    given_flag = (given or "").strip().upper() or None
-    if given_flag not in (None, "H", "L", "N"):
-        given_flag = None
+    from .labs import normalize_flag  # local import avoids a cycle at module load
+
+    given_flag = normalize_flag(given)
     if value is None:
         return given_flag, None
     lo, hi = parse_ref_range(ref)
@@ -292,6 +300,11 @@ def derive_flag(value: float | None, ref: str | None, given: str | None) -> tupl
         return given_flag or None, None
     if given_flag is None:
         return computed, ("flag derived from reference range" if computed != "N" else None)
+    # Critical flags (HH/LL) carry information the range can't: keep them when the direction agrees.
+    if given_flag in ("HH", "LL") and given_flag[0] == computed:
+        return given_flag, None
+    if given_flag == "A" and computed in ("H", "L"):
+        return computed, f"source flag 'A' (abnormal) refined to {computed!r} from range {ref!r}"
     if given_flag != computed:
         return computed, f"source flag {given_flag!r} disagreed with range {ref!r}; recomputed as {computed!r}"
     return given_flag, None

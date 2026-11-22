@@ -16,8 +16,8 @@ from .schema import MAX_WORDS, CitedItem, MediaItem, SummaryContent, word_count
 
 _DX_HEADER = re.compile(r"^(discharge diagnoses|diagnoses|assessment)\s*:\s*$", re.IGNORECASE | re.MULTILINE)
 _LIST_ITEM = re.compile(r"^\s*\d+\.\s*(.+?)\s*$")
-_LAB_LINE = re.compile(r"^(?P<test>[^:\n]+):\s*(?P<val>[\d.]+)\s*(?P<unit>\S*)\s*\(ref (?P<ref>[^)]+)\)\s*\[(?P<flag>HIGH|LOW)\]",
-                       re.MULTILINE)
+_LAB_LINE = re.compile(r"^(?P<test>[^:\n]+):\s*(?P<val>[<>]?=?\d[\d.]*)\s*(?P<unit>[^(\n]*?)\s*\(ref (?P<ref>[^)]+)\)\s*"
+                       r"\[(?P<flag>CRITICAL HIGH|CRITICAL LOW|HIGH|LOW|ABNORMAL)\]", re.MULTILINE)
 _SAFETY = re.compile(r"(allerg[a-z]*:?\s*[^.]+|fall risk[^.]*|on anticoagulation|apixaban|rivaroxaban|warfarin)",
                      re.IGNORECASE)
 _NORMAL_IMPRESSION = re.compile(r"^(no acute|normal|negative|unremarkable)", re.IGNORECASE)

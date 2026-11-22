@@ -21,6 +21,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from ..ingest.labs import find_panel
 from ..ingest.models import CleanDataset, ClinicalDocument, DocKind, Encounter, LabObservation, Patient
 
 NS = uuid.UUID("6f1c1d1e-5b9a-4c55-9a51-0e8f3b8b7a10")
@@ -43,14 +44,6 @@ DOC_TYPE_LOINC: dict[DocKind, tuple[str, str] | None] = {
     DocKind.scanned_document: None,  # free-text outside records: no reliable single LOINC type
 }
 
-PANEL_LOINC = {
-    "CBC": ("58410-2", "CBC panel - Blood by Automated count"),
-    "BMP": ("51990-0", "Basic metabolic panel - Blood"),
-    "LIPID PANEL": ("24331-1", "Lipid panel - Serum or Plasma"),
-    "HBA1C": ("4548-4", "Hemoglobin A1c/Hemoglobin.total in Blood"),
-    "TSH": ("3016-3", "Thyrotropin [Units/volume] in Serum or Plasma"),
-    "BNP": ("30934-4", "Natriuretic peptide B [Mass/volume] in Serum or Plasma"),
-}
 IMAGING_LOINC = ("18748-4", "Diagnostic imaging study")
 
 ENCOUNTER_CLASS = {
@@ -196,13 +189,16 @@ def observation_resource(d: ClinicalDocument, o: LabObservation, idx: int, patie
         res["effectiveDateTime"] = _datetime(d.date)
     if o.value is not None:
         q: dict[str, Any] = {"value": o.value}
+        if o.comparator:
+            q["comparator"] = o.comparator
         if o.unit:
             q.update(unit=o.unit, system=UCUM, code=UCUM_FIX.get(o.unit, o.unit))
         res["valueQuantity"] = q
     else:
         res["dataAbsentReason"] = {"coding": [{"system": DATA_ABSENT, "code": "unknown", "display": "Unknown"}]}
     if o.flag:
-        disp = {"H": "High", "L": "Low", "N": "Normal"}[o.flag]
+        disp = {"H": "High", "L": "Low", "N": "Normal", "HH": "Critical high", "LL": "Critical low",
+                "A": "Abnormal"}[o.flag]
         res["interpretation"] = [{"coding": [{"system": V3_INTERP, "code": o.flag, "display": disp}]}]
     if o.ref_range:
         res["referenceRange"] = [{"text": o.ref_range}]
@@ -210,18 +206,18 @@ def observation_resource(d: ClinicalDocument, o: LabObservation, idx: int, patie
 
 
 def _abnormal_phrase(o: LabObservation) -> str:
-    direction = "high" if o.flag == "H" else "low"
+    direction = {"H": "high", "L": "low", "HH": "critical high", "LL": "critical low"}.get(o.flag or "", "abnormal")
     if o.value is None:  # flagged by the source but the value itself was not reported
         return f"{o.test} flagged {direction} (value not reported)"
-    return f"{o.test} {o.value:g} {o.unit or ''}".rstrip() + f" ({direction})"
+    return f"{o.test} {o.comparator or ''}{o.value:g} {o.unit or ''}".rstrip() + f" ({direction})"
 
 
 def diagnostic_report(d: ClinicalDocument, patient: dict, encounter: dict | None,
                       results: list[dict]) -> dict[str, Any]:
     is_lab = d.kind is DocKind.lab_report
     if is_lab:
-        panel = d.title.removesuffix(" Results").strip().upper()
-        code_tuple = PANEL_LOINC.get(panel)
+        panel = find_panel(d.title.removesuffix(" Results"))
+        code_tuple = (panel.loinc, panel.loinc_display) if panel else None
         category = {"system": V2_0074, "code": "LAB", "display": "Laboratory"}
         abnormal = [o for o in d.observations if o.is_abnormal]
         conclusion = ("Abnormal: " + "; ".join(_abnormal_phrase(o) for o in abnormal)
