@@ -161,13 +161,26 @@ def test_unattributable_records_are_reported_not_silently_dropped(tmp_path):
     assert any(i.severity == "error" for i in ds.issues)
 
 
-@pytest.mark.skipif(not (Path(__file__).parent.parent / "data/raw/ehr_export.json").exists(),
-                    reason="sample data not generated")
-def test_sample_dataset_end_to_end(tmp_path):
-    raw = Path(__file__).parent.parent / "data/raw"
-    ds = run_ingestion(raw, reference=REF)
+def test_sample_dataset_end_to_end(tmp_path, curated_raw):
+    ds = run_ingestion(curated_raw, reference=REF)
     assert len(ds.patients) == 16
     assert len(ds.documents) >= 50, "assessment asks for search over at least 50 records"
     assert all(d.date for d in ds.documents)
     paths = write_outputs(ds, tmp_path)
     assert sum(1 for _ in paths["audit"].open()) == len(ds.all_audit())
+
+
+def test_cohort_dataset_scales_without_losing_or_splitting_patients(cohort_raw):
+    """60 random patients + 16 curated across 5 source files: every person must resolve to exactly one patient."""
+    from ehr.fhir.mapping import build_bundles
+    from ehr.fhir.validation import validate_bundle
+
+    ds = run_ingestion(cohort_raw, reference=REF)
+    assert len(ds.patients) == 76, "MRN typos merged, no duplicates, nobody dropped"
+    assert not [i for i in ds.issues if i.severity == "error"]
+    actions = {e.action for e in ds.all_audit()}
+    assert {"merged", "deduplicated", "normalized", "dropped"} <= actions
+    reasons = " ".join(e.reason for e in ds.all_audit())
+    assert "latin-1" in reasons and "converted" in reasons and "vendor column names" in reasons
+    results = [validate_bundle(b) for b in build_bundles(ds).values()]
+    assert all(r.valid for r in results)
