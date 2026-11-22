@@ -22,6 +22,7 @@ from .fhir.text import bundle_patient
 from .search.embeddings import Embedder, get_embedder
 from .search.index import SearchIndex
 from .summarize.cache import SummaryCache
+from .summarize.context import build_context
 from .summarize.schema import ClinicalSummary
 from .summarize.service import SummaryService, make_summarizer
 
@@ -83,6 +84,8 @@ class PatientDetail(BaseModel):
     bundle_valid: bool
     validation_issues: list[dict]
     summary: ClinicalSummary | None
+    citations: dict[str, dict] = Field(default_factory=dict,
+                                       description="Summary citation id (R1, E1, ...) -> the FHIR resource it refers to")
     resources: list[LinkedResource]
 
 
@@ -205,6 +208,8 @@ def create_app(settings: Settings | None = None, *, embedder: Embedder | None = 
             alternate_mrns=[i["value"] for i in pat.get("identifier", []) if i.get("use") == "old"],
             gender=pat.get("gender"), birth_date=pat.get("birthDate"), bundle_valid=meta["valid"],
             validation_issues=meta["issues"], summary=summary, resources=resources,
+            citations={i.sid: {"resource_id": i.resource_id, "resource_type": i.resource_type, "title": i.title,
+                               "date": i.date} for i in build_context(patient_id, bundle).items},
         )
 
     @app.get("/patients/{patient_id}/bundle", tags=["fhir"])
