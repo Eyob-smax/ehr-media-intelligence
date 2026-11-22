@@ -16,6 +16,8 @@ Ranking
 - A small lexical boost (query terms present in the chunk, title or patient
   name) helps exact clinical terms, names and MRNs, which embeddings handle
   poorly. Final score = 0.8 * semantic + 0.2 * lexical.
+- AI-summary hits are multiplied by 0.9 so that, at equal relevance, the
+  primary record outranks the summary derived from it.
 - Chunks are collapsed to one hit per resource (best chunk wins), top-k returned.
 """
 
@@ -41,6 +43,7 @@ RESOURCE_TYPES = ("DocumentReference", "DiagnosticReport", "Patient")
 CHUNK_WORDS = 120
 CHUNK_OVERLAP = 30
 SEMANTIC_WEIGHT = 0.8
+SUMMARY_PENALTY = 0.9
 
 _MRN_IN_QUERY = re.compile(r"\b(?:mrn[\s:#-]*)?(\d{3,7})\b", re.IGNORECASE)
 
@@ -189,6 +192,8 @@ class SearchIndex:
                 hay = f"{doc} {meta['patient_name']}".lower()
                 lexical = sum(group_matches(g, hay) for g in groups) / len(groups) if groups else 0.0
             score = SEMANTIC_WEIGHT * semantic + (1 - SEMANTIC_WEIGHT) * lexical
+            if meta["resource_type"] == "Patient":
+                score *= SUMMARY_PENALTY  # prefer the primary record over the AI summary derived from it
             rid = meta["resource_id"]
             if rid in best and best[rid].score >= score:
                 continue
