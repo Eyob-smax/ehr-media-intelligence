@@ -149,7 +149,9 @@ def convert(test: LabTest, value: float, unit: str | None) -> tuple[float, str, 
     if conv is None:
         return value, unit, f"unrecognized unit {unit!r} for {test.name}; value kept as reported"
     factor, offset = conv
-    out = round(value * factor + offset, 3 if abs(value * factor) < 10 else 1)
+    raw = value * factor + offset
+    # Do not invent precision the source never had: 2 decimals below 10, 1 decimal above.
+    out = round(raw, 2 if abs(raw) < 10 else 1)
     return out, test.unit, f"converted {value:g} {unit} to {out:g} {test.unit}"
 
 

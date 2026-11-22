@@ -25,9 +25,9 @@ def test_panel_aliases_resolve():
 
 @pytest.mark.parametrize("key, value, unit, expected", [
     ("glu", 11.8, "mmol/L", 212.6),       # glucose mmol/L -> mg/dL
-    ("cr", 186, "umol/L", 2.104),         # creatinine umol/L -> mg/dL
+    ("cr", 186, "umol/L", 2.1),           # creatinine umol/L -> mg/dL (rounded, no invented precision)
     ("hgb", 98, "g/L", 9.8),              # hemoglobin g/L -> g/dL
-    ("a1c", 79, "mmol/mol", 9.379),       # IFCC -> NGSP %
+    ("a1c", 79, "mmol/mol", 9.38),        # IFCC -> NGSP %
     ("trop", 840, "ng/L", 0.84),
 ])
 def test_unit_conversion_to_canonical(key, value, unit, expected):
