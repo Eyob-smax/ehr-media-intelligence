@@ -207,6 +207,24 @@ def test_every_search_hit_resolves_including_summary_hits(client):
         assert got.status_code == 200 and got.json()["resourceType"] == r["resource_type"]
 
 
+def test_ui_is_served_with_accessible_search(built, index):
+    from ehr.config import ROOT
+
+    settings, _, _ = built
+    with TestClient(create_app(settings, embedder=HashEmbedder(), frontend_dir=ROOT / "frontend")) as c:
+        html = c.get("/").text
+        assert 'role="search"' in html and 'aria-modal="true"' in html and 'for="q"' in html
+        assert c.get("/app.js").status_code == 200
+
+
+def test_patient_detail_maps_summary_citations_to_resources(client, sample_dataset):
+    pid = sample_dataset.patients[0].patient_id
+    d = client.get(f"/patients/{pid}").json()
+    cited = {sid for item in d["summary"]["key_diagnoses"] + d["summary"]["flagged_anomalies"]
+             for sid in item["source_ids"]}
+    assert cited and cited <= set(d["citations"])
+
+
 def test_unknown_ids_return_404(client):
     assert client.get("/patients/nope").status_code == 404
     assert client.get("/patients/nope/bundle").status_code == 404
