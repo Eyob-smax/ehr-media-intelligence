@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>EHR Media Intelligence Write-up</title>
+<style>
+  @page { size: Letter; margin: 0.45in 0.55in; }
+  :root { --ink: #1e293b; --muted: #475569; --accent: #136960; }
+  * { box-sizing: border-box; }
+  body { font: 8.9pt/1.36 "Inter", "Helvetica Neue", Arial, sans-serif; color: var(--ink); margin: 0; background: #fff; }
+  header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px solid var(--accent); padding-bottom: 3px; margin-bottom: 6px; }
+  h1 { font-size: 13pt; margin: 0; color: var(--accent); }
+  .meta { color: var(--muted); font-size: 8pt; }
+  h2 { font-size: 9.6pt; margin: 7px 0 2px; color: var(--accent); text-transform: uppercase; letter-spacing: .03em; }
+  ul { margin: 0; padding-left: 14px; }
+  li { margin: 1.5px 0; }
+  p { margin: 2px 0; }
+  b { color: #0f172a; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>EHR Media Intelligence Platform: Write-up</h1>
+  <span class="meta">Eyob Simachew · github.com/Eyob-smax/ehr-media-intelligence</span>
+</header>
+<p>A Python pipeline cleans five messy synthetic source layouts (316 patients, 2,126 records) into audited canonical
+records, maps them to validated FHIR R4 Bundles, writes cited AI summaries, and serves hybrid semantic search
+(30–90 ms per query) through FastAPI and an accessible Tailwind UI. It has 132 automated tests.</p>
+
+<h2>Tradeoffs and why</h2>
+<ul>
+  <li><b>Safety over completeness in identity matching.</b> Two MRNs with the same name and birth date are merged only
+    when the difference looks like a keying error (a transposition or at most two changed digits) and comes from a
+    secondary source. Everything else is flagged for review, because a wrong merge mixes two people's charts while a
+    missed merge only leaves a duplicate.</li>
+  <li><b>R4B models for R4 output.</b> The required Pydantic v2 stack means fhir.resources 8.x, which ships R5 and R4B,
+    not R4. R4B is backward-compatible for every resource used here. I added my own required-binding and
+    reference-integrity checks because the library accepts invalid status codes and dangling references.</li>
+  <li><b>MiniLM plus hybrid ranking instead of a clinical embedding model.</b> MiniLM fits the brief and runs well on a
+    CPU, but it misses lay-to-clinical links, so a small auditable synonym table and a 20% keyword score fill the
+    gap. It's transparent but doesn't scale like a terminology service would.</li>
+  <li><b>Confidence from checks, not from the model.</b> Self-reported LLM confidence is poorly calibrated; grounding
+    checks are deterministic and explainable in the UI. The offline extractive summarizer keeps the system usable
+    without a key and serves as a baseline.</li>
+  <li><b>Local and simple:</b> SQLite plus Chroma, collection Bundles with deterministic UUIDv5 IDs (reproducible
+    builds and stable cache keys), Tailwind from a CDN with no build step, and no authentication (out of scope).
+    Naive source timestamps are treated as UTC for FHIR <code>instant</code>.</li>
+</ul>
+
+<div class="cols">
+<div>
+<h2>What I'd improve with more time</h2>
+<ul>
+  <li>Use a clinical embedding model (e.g. MedCPT) with UMLS/SNOMED synonyms and <b>negation detection</b>: "no
+    hydronephrosis" still counts as a keyword match today.</li>
+  <li>Add HL7 v2 ORU and C-CDA ingestion, plus probabilistic patient matching (Fellegi–Sunter) with a human review
+    queue and name-change history.</li>
+  <li>Evaluate summaries on a clinician-labeled set (per-field precision and recall, omissions), with an LLM-as-judge
+    faithfulness check alongside the lexical checks.</li>
+  <li>Validate against US Core profiles on a HAPI FHIR server (<code>$validate</code>, terminology server); use
+    incremental indexing and async ingestion.</li>
+  <li>For production: authentication and RBAC, access audit logs, PHI controls, and lab trend charts in the UI.</li>
+</ul>
+</div>
+<div>
+<h2>FHIR and clinical concepts I researched</h2>
+<ul>
+  <li>DocumentReference (narrative documents) vs DiagnosticReport plus Observation (results); v2-0074 LAB/RAD
+    categories; the v2-0203 <code>MR</code> identifier type.</li>
+  <li>Observation <code>interpretation</code> (H/L/HH/LL/A, HL7 v2 table 0078), <code>dataAbsentReason</code>,
+    <code>valueQuantity.comparator</code>, UCUM units.</li>
+  <li>Bundle reference resolution through <code>urn:uuid</code> fullUrls; required vs extensible bindings; the
+    administrative-gender value set and ISO 5218 numeric codes.</li>
+  <li>LOINC panel and document codes; SI conversions (glucose ×18.016, creatinine ÷88.4, HbA1c IFCC to NGSP).</li>
+  <li>Patient-matching error types: transpositions, namesakes, day/month swaps.</li>
+</ul>
+</div>
+</div>
+
+<h2>How I validated AI summary quality</h2>
+<ul>
+  <li><b>By construction:</b> structured outputs enforce a schema in which every diagnosis, media item and anomaly
+    cites the record IDs it came from. The prompt asks for chart wording, no inference, and empty lists rather than guesses.</li>
+  <li><b>On every summary, automatically:</b> cited IDs must exist; every number must appear verbatim in the cited
+    record (wrong numbers are the most dangerous error); key terms must overlap with the cited text; and the 200-word
+    limit is enforced, with one rewrite request and then a deterministic trim. The results set the confidence level,
+    and the problems are stored with the summary and shown in the drawer.</li>
+  <li><b>Adversarial tests:</b> an injected wrong potassium value, a nonexistent record, an unsupported cancer
+    diagnosis and an uncited claim are all caught. The Claude path is tested with a mocked client: request shape, the
+    shorten retry, refusal, schema mismatch and the auth-failure fallback.</li>
+  <li><b>Results:</b> all 316 offline summaries pass grounding at ≤154 words. Limitation: these checks are lexical, so
+    they cannot catch omissions or misplaced emphasis, and live Claude output still needs clinician review, which is
+    the first item on my improvement list.</li>
+</ul>
+</body>
+</html>
