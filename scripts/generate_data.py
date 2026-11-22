@@ -22,6 +22,7 @@ import argparse
 import csv
 import json
 import random
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -413,7 +414,7 @@ def lab_rows(p: Person, c: Condition, collected: datetime) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def build(out: Path, seed: int) -> dict[str, int]:
+def build(out: Path, seed: int, cohort: int = 0) -> dict[str, int]:
     rng = random.Random(seed)
     cond_by_key = {c.key: c for c in CONDITIONS}
 
@@ -608,6 +609,8 @@ def build(out: Path, seed: int) -> dict[str, int]:
     (out / "notes").mkdir(exist_ok=True)
     for f in (out / "notes").glob("*.txt"):
         f.unlink()
+    for stale in ("site_b_export.json", "lab_results_vendor_b.csv"):
+        (out / stale).unlink(missing_ok=True)
     rng.shuffle(json_records)
     (out / "ehr_export.json").write_text(json.dumps({"export_date": ANCHOR.isoformat(), "records": json_records}, indent=2))
     with (out / "lab_results.csv").open("w", newline="") as fh:
@@ -617,15 +620,324 @@ def build(out: Path, seed: int) -> dict[str, int]:
     for name, body in txt_docs:
         (out / "notes" / name).write_text(body)
 
-    return {"json_records": len(json_records), "lab_rows": len(csv_out), "scanned_docs": len(txt_docs)}
+    counts = {"json_records": len(json_records), "lab_rows": len(csv_out), "scanned_docs": len(txt_docs)}
+    if cohort:
+        counts.update(build_cohort(out, seed + 1, cohort))
+    return counts
+
+
+# ===========================================================================
+# Scalable random cohort
+# ===========================================================================
+# The curated patients above are hand-built edge cases with known expected
+# outcomes (the tests pin them). The cohort below adds volume and realistic
+# variety: multi-morbidity, several visits over three years, jittered lab
+# values, three extra source layouts and data-quality problems injected at
+# realistic rates.
+
+EXTRA_ANALYTES = {
+    "trop": ("Troponin", "Troponin I", "ng/mL", 0, 0.04),
+    "lipase": ("Lipase", "Lipase", "U/L", 10, 60),
+    "inr": ("PT/INR", "INR", "", 0.8, 1.2),
+    "ddimer": ("D-dimer", "D-dimer", "mg/L FEU", 0, 0.5),
+    "alt": ("Hepatic Function Panel", "ALT", "U/L", 7, 56),
+    "ast": ("Hepatic Function Panel", "AST", "U/L", 10, 40),
+    "lactate": ("Lactate", "Lactate", "mmol/L", 0.5, 2.0),
+    "ferritin": ("Ferritin", "Ferritin", "ng/mL", 15, 300),
+}
+EXTRA_NORMAL = {"trop": 0.01, "lipase": 32, "inr": 1.0, "ddimer": 0.3, "alt": 24, "ast": 22, "lactate": 1.1,
+                "ferritin": 90}
+EXTRA_PANELS = {"Troponin": ["trop"], "Lipase": ["lipase"], "PT/INR": ["inr"], "D-dimer": ["ddimer"],
+                "Hepatic Function Panel": ["alt", "ast"], "Lactate": ["lactate"], "Ferritin": ["ferritin"]}
+
+EXTRA_CONDITIONS: list[Condition] = [
+    Condition(
+        "nstemi", "Substernal chest pressure", "inpatient",
+        ["Non-ST elevation myocardial infarction", "Hyperlipidemia"],
+        "Two hours of substernal pressure radiating to the left arm with diaphoresis.",
+        "Serial troponins rose. Left heart catheterization showed 90% mid-LAD stenosis treated with a drug-eluting stent.",
+        "Aspirin, ticagrelor, atorvastatin 80 mg, metoprolol; cardiac rehabilitation referral.",
+        ("XR Chest Portable", "Normal heart size. Clear lungs.", "No acute cardiopulmonary process."),
+        {"Troponin": {"trop": 2.84}, "BMP": {}, "Lipid Panel": {"ldl": 171}},
+    ),
+    Condition(
+        "pe", "Pleuritic chest pain and shortness of breath", "inpatient",
+        ["Acute pulmonary embolism, right lower lobe segmental"],
+        "Sudden pleuritic chest pain and dyspnea two weeks after knee surgery. Heart rate 112.",
+        "Started on heparin infusion, transitioned to apixaban. Echocardiogram without right heart strain.",
+        "Apixaban 10 mg BID for 7 days then 5 mg BID for at least 3 months; hematology follow-up.",
+        ("CT Angiography Chest",
+         "Filling defect within a right lower lobe segmental pulmonary artery. No right ventricular dilation.",
+         "Acute right lower lobe segmental pulmonary embolism."),
+        {"D-dimer": {"ddimer": 3.9}, "CBC": {}},
+    ),
+    Condition(
+        "pancreatitis", "Severe epigastric pain radiating to the back", "inpatient",
+        ["Acute gallstone pancreatitis"],
+        "Twelve hours of severe epigastric pain radiating to the back with vomiting.",
+        "Aggressive IV fluids and pain control. Laparoscopic cholecystectomy on hospital day 3.",
+        "Low-fat diet, surgical follow-up in 2 weeks.",
+        ("US Abdomen Right Upper Quadrant",
+         "Multiple gallstones without gallbladder wall thickening. Common bile duct 5 mm.",
+         "Cholelithiasis without cholecystitis."),
+        {"Lipase": {"lipase": 1840}, "Hepatic Function Panel": {"alt": 212, "ast": 168}, "CBC": {"wbc": 13.4}},
+    ),
+    Condition(
+        "gibleed", "Black tarry stools and dizziness", "inpatient",
+        ["Upper gastrointestinal bleed from duodenal ulcer", "Acute blood loss anemia"],
+        "Three days of melena and lightheadedness while taking ibuprofen daily for knee pain.",
+        "Transfused 2 units of packed red cells. EGD showed a clean-based duodenal ulcer.",
+        "Pantoprazole 40 mg BID for 8 weeks, avoid NSAIDs, test for H. pylori, repeat CBC in 1 week.",
+        None,
+        {"CBC": {"hgb": 6.8}, "PT/INR": {"inr": 1.1}, "BMP": {}},
+    ),
+    Condition(
+        "afib", "Palpitations", "emergency",
+        ["Atrial fibrillation with rapid ventricular response"],
+        "Six hours of palpitations and mild dyspnea. No chest pain.",
+        "Rate controlled with IV diltiazem. CHA2DS2-VASc score 3.",
+        "Start apixaban 5 mg BID and metoprolol succinate; outpatient echocardiogram and cardiology follow-up.",
+        None,
+        {"TSH": {}, "BMP": {"k": 3.3}},
+    ),
+    Condition(
+        "cellulitis", "Red swollen painful left leg", "emergency",
+        ["Cellulitis of the left lower extremity"],
+        "Three days of spreading erythema and warmth of the left shin after a minor scrape.",
+        "No fluctuance. Margins marked. Ultrasound excluded abscess.",
+        "Cephalexin 500 mg QID for 7 days, leg elevation, return if spreading beyond the marked margins.",
+        None,
+        {"CBC": {"wbc": 12.6}},
+    ),
+]
+
+GIVEN = {
+    "female": ["Amara", "Beatriz", "Chloé", "Dana", "Elena", "Fiona", "Grace", "Hana", "Ines", "Jasmine", "Kavya",
+               "Leah", "María José", "Nadia", "Olivia", "Priscila", "Quinn", "Rosa", "Siobhan", "Tamar", "Ursula",
+               "Valentina", "Wen", "Ximena", "Yara", "Zoë", "Mary-Kate", "Aoife", "Renée", "Saanvi"],
+    "male": ["Adebayo", "Bruno", "Chidi", "Dmitri", "Emeka", "Felipe", "Gustavo", "Hiroshi", "Ivan", "Jamal",
+             "Kwame", "Liam", "Mohammed", "Nikolai", "Omar", "Pedro", "Rafael", "Sven", "Tomás", "Uriel", "Viktor",
+             "William", "Xavier", "Yusuf", "Zachary", "Jean-Luc", "Seán", "Björn", "Arjun", "Diego"],
+}
+FAMILY = ["Abara", "Bergström", "Castillo", "D'Angelo", "Eriksen", "Fitzgerald", "García-López", "Haddad", "Ivanova",
+          "Jovanović", "Kowalski", "Lindgren", "McAllister", "Nakamura", "O'Connor", "Petrov", "Quispe", "Rahman",
+          "Søndergaard", "Tanaka", "Ünal", "Vasquez", "Wójcik", "Xu", "Yilmaz", "Zielinski", "Okonkwo", "Achebe",
+          "Moreno", "Schmidt", "Nguyen", "Kim", "Singh", "Cohen", "Murphy", "Rossi", "Silva", "Dubois", "Novak",
+          "Mendoza", "MacLeod", "Van der Berg", "De la Cruz", "St. Clair", "Al-Farsi"]
+SUFFIXES = ["Jr.", "Sr.", "II", "III"]
+
+OUTSIDE_TEMPLATES = [
+    ("Outside Records - Urgent Care", "Urgent care visit for {reason_l}. Vital signs stable. Referred for further "
+                                      "evaluation. Allergy: {allergy}."),
+    ("Pharmacy Medication Reconciliation", "Medication list reviewed with patient. Reports adherence issues with "
+                                           "evening doses. Allergy: {allergy}. No new medications."),
+    ("Home Health Nursing Note", "Home visit. Patient ambulating with cane. Fall risk moderate. Reinforced "
+                                 "medication schedule. Blood pressure 142/88."),
+    ("Insurance Prior Authorization Letter", "Request for prior authorization of advanced imaging related to "
+                                             "{reason_l}. Clinical notes attached."),
+]
+ALLERGIES = ["penicillin", "sulfa drugs", "no known drug allergies", "latex", "iodinated contrast", "codeine"]
+
+# Vendor B reports some analytes in SI units and uses its own names.
+VENDOR_B_UNITS = {"Glucose": ("mmol/L", 1 / 18.016), "Creatinine": ("umol/L", 88.4), "Hemoglobin": ("g/L", 10.0),
+                  "LDL Cholesterol": ("mmol/L", 1 / 38.67), "HDL Cholesterol": ("mmol/L", 1 / 38.67),
+                  "Total Cholesterol": ("mmol/L", 1 / 38.67), "Troponin I": ("ng/L", 1000.0)}
+VENDOR_B_NAMES = {"Hemoglobin": "HGB", "WBC": "WBC Count", "Platelets": "PLT", "Sodium": "NA", "Potassium": "K",
+                  "Creatinine": "CREAT", "Glucose": "GLU", "Hemoglobin A1c": "HbA1c", "LDL Cholesterol": "LDL-C",
+                  "HDL Cholesterol": "HDL-C", "Total Cholesterol": "CHOL", "Troponin I": "TNI", "ALT": "SGPT",
+                  "AST": "SGOT"}
+VENDOR_B_PANELS = {"CBC": "CBC W/O DIFF", "BMP": "CHEM7", "Lipid Panel": "LIPID PROFILE",
+                   "Hepatic Function Panel": "LFT", "PT/INR": "COAGS"}
+
+
+def _jitter(rng: random.Random, v: float, pct: float) -> float:
+    out = v * (1 + rng.uniform(-pct, pct))
+    return round(out, 2 if abs(out) < 10 else 1 if abs(out) < 100 else 0)
+
+
+def _cohort_lab_rows(rng: random.Random, c: Condition, collected: datetime) -> list[dict]:
+    rows = []
+    for panel, overrides in c.labs.items():
+        keys = PANELS.get(panel) or EXTRA_PANELS[panel]
+        for key in keys:
+            if key in ANALYTES:
+                _, test, unit, lo, hi = ANALYTES[key]
+                base = NORMAL_VALUES[key]
+            else:
+                _, test, unit, lo, hi = EXTRA_ANALYTES[key]
+                base = EXTRA_NORMAL[key]
+            value = _jitter(rng, overrides[key], 0.12) if key in overrides else _jitter(rng, base, 0.06)
+            if value > hi * 1.5 and key in ("k", "trop", "lactate", "glu"):
+                flag = "HH"
+            elif value < lo * 0.7 and key in ("hgb", "k", "na"):
+                flag = "LL"
+            else:
+                flag = "H" if value > hi else "L" if value < lo else ""
+            ref = f"{lo:g}-{hi:g}" if lo else f"<{hi:g}"
+            rows.append({"panel": panel, "test": test, "value": value, "unit": unit, "ref_range": ref,
+                         "flag": flag, "collected": collected})
+    return rows
+
+
+def _fmt_num_eu(v: float) -> str:
+    return f"{v:g}".replace(".", ",")
+
+
+def build_cohort(out: Path, seed: int, n: int) -> dict[str, int]:
+    rng = random.Random(seed)
+    conditions = CONDITIONS + EXTRA_CONDITIONS
+    records_a: list[dict] = []   # appended to ehr_export.json
+    records_b: list[dict] = []   # site B export: bare JSON list, different key names
+    labs_a: list[dict] = []
+    labs_b: list[str] = []
+    scans: list[tuple[str, str]] = []
+    used_names: set[tuple] = set()
+    rec_no = 50000
+
+    for i in range(n):
+        gender = rng.choice(["female", "male"])
+        while True:
+            given, family = rng.choice(GIVEN[gender]), rng.choice(FAMILY)
+            dob = date(rng.randint(1932, 2006), rng.randint(1, 12), rng.randint(1, 28))
+            if (given, family, dob) not in used_names:
+                used_names.add((given, family, dob))
+                break
+        suffix = rng.choice(SUFFIXES) if gender == "male" and rng.random() < 0.06 else ""
+        mrn = 100000 + i * 17 + rng.randint(0, 9)
+        site_b = rng.random() < 0.3
+        n_conditions = rng.choices([1, 2, 3], weights=[5, 3, 2])[0]
+        conds = rng.sample(conditions, n_conditions)
+        visits: list[tuple[Condition, datetime]] = []
+        for c in conds:
+            for _ in range(rng.choices([1, 2], weights=[3, 1])[0]):
+                day = ANCHOR - timedelta(days=rng.randint(2, 1000))
+                visits.append((c, datetime.combine(day, datetime.min.time()) + timedelta(hours=rng.randint(7, 21))))
+        visits.sort(key=lambda v: v[1])
+        person = Person(mrn=mrn, given=given, family=family, dob=dob, gender=gender, condition=conds[0])
+        display_family = f"{family} {suffix}".strip()
+
+        for c, when in visits:
+            rec_no += 1
+            enc_id = f"ENC-{rec_no:06d}"
+            note_kind = {"inpatient": "discharge_summary", "emergency": "ed_note", "outpatient": "progress_note"}[c.setting]
+            note_dt = when + timedelta(days=rng.randint(2, 5) if c.setting == "inpatient" else 0)
+            docs = [{"doc_type": note_kind,
+                     "title": {"discharge_summary": "Discharge Summary", "ed_note": "ED Provider Note",
+                               "progress_note": "Office Visit Note"}[note_kind],
+                     "date": datetime_variant(rng, note_dt),
+                     "text": note_text(person, c, note_dt.date(), note_kind)}]
+            if c.imaging:
+                docs.append({"doc_type": "imaging_report", "title": c.imaging[0],
+                             "date": datetime_variant(rng, when + timedelta(hours=rng.randint(1, 8))),
+                             "text": imaging_text(c)})
+            if rng.random() < 0.03:  # missing document date
+                docs[0].pop("date")
+            if site_b:
+                patient = {"patientIdentifier": f"MRN-{mrn:07d}" if rng.random() < 0.5 else str(mrn),
+                           "full_name": f"{display_family.upper()}, {given}",
+                           "birth_date": date_variant(rng, dob), "Sex": gender_variant(rng, gender)}
+                rec = {"record_id": f"B-{rec_no}", "patient": patient,
+                       "encounter": {"encounter_id": enc_id, "period_start": datetime_variant(rng, when),
+                                     "type": {"inpatient": "IMP", "emergency": "EMER", "outpatient": "AMB"}[c.setting],
+                                     "chief_complaint": c.reason},
+                       "documents": [{"type": d["doc_type"].replace("imaging_report", "radiology_report"),
+                                      "description": d["title"], "effective": d.get("date"), "text": d["text"]}
+                                     for d in docs]}
+                if rng.random() < 0.03:
+                    rec["patient"].pop("Sex")
+                records_b.append(rec)
+            else:
+                patient = {rng.choice(["mrn", "MRN", "medical_record_number"]): mrn_variant(rng, mrn),
+                           rng.choice(["dob", "DOB", "birthDate"]): date_variant(rng, dob),
+                           rng.choice(["gender", "sex"]): gender_variant(rng, gender)}
+                if rng.random() < 0.5:
+                    patient["name"] = f"{given} {display_family}"
+                else:
+                    patient["first_name"], patient["last_name"] = given, display_family
+                rec = {"record_id": f"REC-{rec_no:06d}", "source_system": "EpicSim", "patient": patient,
+                       "encounter": {"id": enc_id, "date": datetime_variant(rng, when), "class": c.setting,
+                                     "reason": c.reason},
+                       "documents": docs}
+                if rng.random() < 0.02:
+                    for k in ("dob", "DOB", "birthDate"):
+                        patient.pop(k, None)
+                records_a.append(rec)
+                if rng.random() < 0.02:  # re-sent export message
+                    records_a.append(json.loads(json.dumps(rec)))
+
+            # Labs: ~60% go to the main LIS (CSV A), the rest to vendor B (SI units, aliases, EU formatting).
+            collected = when + timedelta(hours=1)
+            to_b = rng.random() < 0.4
+            typo = rng.random() < 0.02
+            for row in _cohort_lab_rows(rng, c, collected):
+                mrn_s = f"{mrn:07d}"
+                if typo:  # transposed digits in the lab system
+                    mrn_s = mrn_s[:-2] + mrn_s[-1] + mrn_s[-2]
+                value = row["value"]
+                if rng.random() < 0.01:
+                    value = rng.choice(["pending", "hemolyzed"])
+                if to_b:
+                    unit, factor = VENDOR_B_UNITS.get(row["test"], (row["unit"], 1.0))
+                    if isinstance(value, float | int):
+                        v = value * factor
+                        value = _fmt_num_eu(round(v, 2 if abs(v) < 10 else 1 if abs(v) < 100 else 0))
+                        if row["test"] == "Troponin I" and row["value"] < 0.02:
+                            value = "<10"
+                    labs_b.append(";".join([
+                        f"MRN {mrn_s}", f"{display_family}, {given}", dob.strftime("%d.%m.%Y"),
+                        collected.strftime("%d.%m.%Y %H:%M"), VENDOR_B_PANELS.get(row["panel"], row["panel"]),
+                        VENDOR_B_NAMES.get(row["test"], row["test"]), str(value), unit,
+                        "" if unit != row["unit"] else row["ref_range"].replace(".", ","), row["flag"]]))
+                else:
+                    labs_a.append({
+                        "mrn": rng.choice([mrn_s, f"MRN-{mrn_s}", f"MRN {mrn_s}"]),
+                        "patient_name": "" if rng.random() < 0.03 else f"{display_family.upper()}, {given.upper()}",
+                        "dob": date_variant(rng, dob, allow_two_digit=True),
+                        "collected": collected.strftime(rng.choice(["%m/%d/%Y %H:%M", "%Y-%m-%d %H:%M"])),
+                        "panel": row["panel"], "test": row["test"], "value": value, "unit": row["unit"],
+                        "ref_range": row["ref_range"], "flag": row["flag"]})
+
+        if rng.random() < 0.15:
+            title, tpl = rng.choice(OUTSIDE_TEMPLATES)
+            when = ANCHOR - timedelta(days=rng.randint(1, 400))
+            body = tpl.format(reason_l=conds[0].reason.lower(), allergy=rng.choice(ALLERGIES))
+            header = (f"PATIENT: {display_family.upper()}, {given.upper()}    MRN: {mrn_variant(rng, mrn)}\n"
+                      f"DOB: {date_variant(rng, dob, allow_two_digit=True)}    SEX: {gender_variant(rng, gender)}\n"
+                      f"DATE OF SERVICE: {date_variant(rng, when)}\nDOCUMENT TYPE: {title}\n{'-' * 40}\n")
+            slug = re.sub(r"[^a-z0-9]+", "_", f"{family}_{title.split()[0]}_{mrn}".lower())
+            scans.append((f"cohort_{slug}.txt", header + ocr_noise(rng, body) + "\n\f"))
+
+    # Corrupt a few vendor-B rows to exercise row-level validation.
+    for k in range(max(1, len(labs_b) // 400)):
+        labs_b.insert(rng.randrange(len(labs_b) or 1), "MRN 0000000;truncated row")
+
+    # --- write (append to the curated files, plus the new layouts) ----------
+    export_path = out / "ehr_export.json"
+    data = json.loads(export_path.read_text())
+    data["records"].extend(records_a)
+    rng.shuffle(data["records"])
+    export_path.write_text(json.dumps(data, indent=1))
+    (out / "site_b_export.json").write_text(json.dumps(records_b, indent=1, ensure_ascii=False))
+    with (out / "lab_results.csv").open("a", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=["mrn", "patient_name", "dob", "collected", "panel", "test", "value",
+                                           "unit", "ref_range", "flag"])
+        w.writerows(labs_a)
+    header_b = "PatientID;Patient Name;BirthDate;ResultDateTime;OrderName;Analyte;Result;Units;RefRange;AbnFlag"
+    (out / "lab_results_vendor_b.csv").write_bytes(("\n".join([header_b, *labs_b]) + "\n").encode("latin-1", errors="replace"))  # legacy system: unencodable chars become "?"
+    for name, body in scans:
+        (out / "notes" / name).write_text(body)
+    return {"cohort_patients": n, "cohort_json_records": len(records_a) + len(records_b),
+            "cohort_lab_rows": len(labs_a) + len(labs_b), "cohort_scans": len(scans)}
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", type=Path, default=Path(__file__).resolve().parent.parent / "data" / "raw")
     ap.add_argument("--seed", type=int, default=7)
+    ap.add_argument("--patients", type=int, default=300,
+                    help="size of the random cohort added to the 16 curated edge-case patients (0 = curated only)")
     args = ap.parse_args()
-    counts = build(args.out, args.seed)
+    counts = build(args.out, args.seed, cohort=args.patients)
     print(f"Wrote synthetic dataset to {args.out}: {counts}")
 
 
