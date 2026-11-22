@@ -87,6 +87,8 @@ def _anomalies(items: list[SourceItem]) -> list[CitedItem]:
         elif it.kind == "document":
             for m in _SAFETY.finditer(it.text):
                 phrase = m.group(1).strip().rstrip(".")
+                if phrase.lower() in ("apixaban", "rivaroxaban", "warfarin"):
+                    phrase = f"Anticoagulation: {phrase.lower()}"
                 if not any(phrase.lower() in a.text.lower() for a in out):
                     out.append(CitedItem(text=phrase[0].upper() + phrase[1:], source_ids=[it.sid]))
                 break
@@ -95,7 +97,7 @@ def _anomalies(items: list[SourceItem]) -> list[CitedItem]:
 
 class OfflineSummarizer:
     name = "offline"
-    model = "rule-based-extractive-v1"
+    model = "rule-based-extractive-v2"
 
     def summarize(self, ctx: PatientContext) -> tuple[SummaryContent, str]:
         content = SummaryContent(
